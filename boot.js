@@ -1,14 +1,12 @@
 
 var CoreJS = require('corejs');
 
-var env = 'development';
-
 CoreJS.bootstrap(__dirname, {
   
   // Server configuration
   
   server: {
-    host: (env == 'production') ? 'corejs.org' : 'localhost',
+    host: 'localhost',
     port: 8080,
     multiProcess: false,
     stayUp: 'production'
@@ -19,7 +17,7 @@ CoreJS.bootstrap(__dirname, {
   environments: {
     
     // Default Environment
-    default: env,
+    default: 'development',
     
     development: function(app) {
       
