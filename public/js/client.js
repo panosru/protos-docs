@@ -10,10 +10,9 @@ var toc = ['<ul>'],
   
 $(document).ready(function() {
   initClosureVars();
-
+  beautifyLists();
+  addLinkIDs();
   if (allowed.indexOf($body.attr('id')) >= 0) {
-    beautifyLists();
-    addLinkIDs();
     $w.resize(adjustLayout);
     $w.scroll(scrollEvent);
   } else {

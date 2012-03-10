@@ -25,8 +25,7 @@ function MainHelper(app) {
   // Renders active menu items
   
   this.active_page = function(locals, page) {
-    var active = (locals.activePage || 'features');
-    return (active === page) ? ' class="active"' : '';
+    return (locals.activePage === page) ? ' class="active"' : '';
   }
   
   // Renders the page id
