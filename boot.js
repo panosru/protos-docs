@@ -43,7 +43,7 @@ CoreJS.bootstrap(__dirname, {
       // Production Logging
       app.use('logger', {
         accessLog: true,
-        accessLogFormat: 'detailed',
+        accessLogFormat: 'default',
         accessLogConsole: false,
         infoLevel: {file: 'info.log'},
         errorLevel: {file: 'error.log'}
