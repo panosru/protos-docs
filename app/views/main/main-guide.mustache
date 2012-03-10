@@ -1,0 +1,1574 @@
+
+[markdown]
+
+## Installation
+
+    $ npm install corejs
+    
+To have global access to the corejs(1) executable, you can install the framework globally:
+
+    $ sudo npm install -g corejs
+    
+Global installation is the recommended installation method. If the installation fails, it might be because 
+you don't have *libxml2* installed on your sistem.
+
+Your applications will automatically inherit all [the dependencies](https://github.com/corejs/corejs/blob/master/package.json) the framework provides:
+
+    var hiredis = corejs.require('hiredis');
+    
+## Creating an Application
+
+To quickly create an application and get started:
+
+    $ corejs create myapp
+    
+You can specify more options to the create command:
+
+    $ corejs create myapp --domain corejs.org --js jquery prototype --css bootstrap
+
+The command above will create an an application in the *myapp/* directory. Will download automatically the
+jQuery and Prototype libraries, and store then in *myapp/public/js* and Twitter's Bootstrap CSS framework into
+*myapp/public/css/bootstrap/*.
+
+The `--domain` switch will automatically set the domain in your application's config.
+
+To create the application with a default set of Models &amp; Controllers:
+
+    $ corejs create myapp --model users accounts --controller blog admin profile
+  
+For a full list of options and commands, run `corejs --help`.
+
+
+## Creating Application Resources
+
+The corejs command also allows you to create Controllers, Helpers, Models, Views and Partials. You _must_ be within your 
+application's path to be able to generate new components.
+
+### Creating Controllers
+
+Controllers are created with the `corejs controller` command. This will also create the _Helpers_ and _Views_:
+
+    $ corejs controller blog admin
+    
+If you don't want helpers to be automatically created, use the `--nohelper` switch.
+
+Here's what the command above creates:
+
+    » Created myapp/app/controllers/blog.js
+    » Created myapp/app/controllers/admin.js
+    » Created myapp/app/helpers/blog.js
+    » Created myapp/app/helpers/admin.js
+    » Created myapp/app/views/blog/blog-index.html
+    » Created myapp/app/views/admin/admin-index.html
+
+### Creating Models
+
+Models are created with the `corejs model` command:
+
+    $ corejs model posts comments
+    
+Here's what the command above creates:
+
+    » Created myapp/app/models/posts.js
+    » Created myapp/app/models/comments.js
+
+### Creating Helpers
+
+Helpers are created with the `corejs helper` command:
+
+    $ corejs helper navigation sidebar
+    
+Here's what the command above creates:
+
+    » Created myapp/app/helpers/navigation.js
+    » Created myapp/app/helpers/sidebar.js
+
+### Creating Views
+
+Views are created with the `corejs view` command, using the `{controller-alias}/view-name{.ext}` convention:
+
+    $ corejs view main/info blog/posts blog/comments.html admin/accounts
+    
+Here's the output of the command above:
+
+    » Created myapp/app/views/main/main-info.html
+    » Created myapp/app/views/blog/blog-posts.html
+    » Created myapp/app/views/blog/comments.html
+    » Created myapp/app/views/admin/admin-accounts.html
+
+You can use the `--ext` option to create your views using specific extensions:
+
+    $ corejs view main/user main/test --ext jade
+    
+This will create your .jade templates:
+
+    » Created myapp/app/views/main/main-user.jade
+    » Created myapp/app/views/main/main-test.jade
+
+### Creating View Partials
+
+View Partials are created with the `corejs partial` command. It uses the same convention as the views:
+
+    $ corejs view blog/post admin/sidebar
+    
+Here's the output of the command above:
+
+    » Created myapp/app/views/blog/_post.html
+    » Created myapp/app/views/admin/_sidebar.html
+    
+As with views, you can also specify the `--ext` option to create your partials using custom extensions.
+
+## Running the Application's Server
+
+Application scan be run either by calling node directly with the application's directory (or boot file) as input,
+or by using the corejs command to start the server.
+
+### Using the node executable
+
+To quickly start an application's server, you can call node with the application's directory as parameter:
+
+    $ node myapp/
+    
+If you're inside the application, you can call the boot file directly:
+
+    $ node boot.js
+    
+You can also run the application in a specific environment:
+
+    $ NODE_ENV=production node myapp/
+
+### Using the corejs executable
+
+Applications can also be started using the corejs command:
+
+    $ corejs server myapp/
+    
+If you're located anywhere within your application's path
+
+    $ corejs server
+
+Additionally, you can specify which environment to use:
+
+    $ corejs server --env production
+    
+
+You can run the server by forking into a new node process:
+
+    $ corejs server myapp/ --fork --logpath server.log
+    
+The server's stdout stream will then be redirected into the logpath you specify.
+
+Each application can have more sophisticated logging mechanisms by using the [Logger Middleware](/middleware#logger).
+
+
+## Deploying a Cluster Server
+
+CoreJS provides a built-in proxy that will automatically direct requests for all your applications. Behind the scenes,
+it uses the [Bouncy](https://github.com/substack/bouncy) to handle the redirection.
+
+You can deploy your applications &amp; servers using the command line or a JSON file.
+
+
+### Using the commmand line
+
+Each application runs in a separate node process, isolated from other applications. This is a secure deployment strategy,
+to prevent collisions between your applications & libraries.
+
+Applications can define how many **node processes** they will use in their respective `multiProcess` bootstrap option. 
+This way, you can manually specify how many cores each application will use.
+
+This is how you run a cluster server from the command line using the `app:port` convention:
+
+    $ corejs server mysite:8081 yoursite:8082 --port 80 --fork --logpath server.log --env production
+    
+This will run a proxy server on port 80, redirecting all requests to applications/ports specified.
+
+
+### Using a JSON file
+
+To deploy your applications using JSON, create a JSON file (preferably where the application directories live).
+
+For example: create a **cluster.json** file with the following contents:
+
+    {
+      "fork": "true",
+      "env": "production",
+      "port": "80",
+      "logpath": "server.log",
+      "routes": {
+        "mysite": "8081",
+        "yoursite": "8082"
+      }
+    }
+
+These settings are analogous to the command line example. This method is very convenient, since it allows you
+to keep the deployment configuration in a single JSON file.
+
+
+## Application Structure
+
+The following tree contains the skeletal application structure, just after running `corejs create myapp`.
+
+    myapp/
+    ├── app
+    │   ├── controllers
+    │   │   └── main.js
+    │   ├── helpers
+    │   │   └── main.js
+    │   ├── models
+    │   │   └── users.js
+    │   └── views
+    │       ├── __layout
+    │       │   ├── footer.mustache
+    │       │   └── header.mustache
+    │       ├── __restricted
+    │       │   ├── 404.mustache
+    │       │   ├── 500.mustache
+    │       │   └── msg.mustache
+    │       ├── __static
+    │       │   └── static.mustache
+    │       └── main
+    │           └── main-index.html
+    ├── app.js
+    ├── boot.js
+    ├── config
+    │   ├── base.js
+    │   ├── database.js
+    │   ├── env
+    │   │   ├── debug.js
+    │   │   ├── development.js
+    │   │   └── production.js
+    │   ├── regex.js
+    │   └── storage.js
+    ├── incoming
+    │   └── readme.md
+    ├── init.js
+    ├── log
+    ├── middleware
+    │   └── readme.md
+    ├── package.json
+    ├── public
+    │   ├── favicon.ico
+    │   └── robots.txt
+    ├── scripts
+    │   ├── automate.js
+    │   └── readme.md
+    └── test
+        └── readme.md
+
+### app.js
+
+This is the ideal place to store your extensions to the Application constructor's prototype. This file is optional.
+
+### boot.js
+
+This is the Application's **bootstrap** file. It is used to specify your application's configuration, such as hostname,
+port, number of node processes to use, etc.
+
+The bootstrap file is very flexible, since it also allows you to run code on each environment. Useful if you want to 
+load different middleware configurations on each environment.
+
+### init.js
+
+The function in this file gets executed _after_ the application initializes (and after the `init` event).
+
+### package.json
+
+Package information for the application. If you remove this file, make sure you include an `index.js` file, which will
+add compatibility to run the application by passing the directory where the application resides.
+
+### app/
+
+The app/ directory is used to store all the logic behind your application.
+
+- **controllers**: Contains controller files
+- **helpers**: Contains helper files
+- **models**: Contains model files
+- **views**: Contain view & layout files
+
+### app/views
+
+This is where all the views live. There are some special directories:
+
+- **__layout**: Used to store the layout components, such as header, footer et al
+- **__restricted**: This is where the templates such as errors &amp; notifications are stored
+- **__static**: This is where the static views are located
+
+Any other directories not mentioned above are considered to be **controller namespaces**.
+
+### app/views/{controller-alias}
+
+This is where the views for _controller-alias_ will be stored. These _must_ match controller aliases in order for the 
+views to render correctly. This means that _BlogController_ will expect _app/views/blog/_ to exist, and so on.
+
+If the controller's **views directory** is not found, you'll get an HTTP/500 Error. These directories are automatically
+created for you.
+
+### config/
+
+This is where all of the application's configuration files and environment scripts are located.
+
+You can find more information on the [Application Configuration](#application-configuration) section.
+
+### incoming/
+
+This is where the application uploads will live. Everythign you upload will end up here by default.
+
+### log/
+
+Location where the application's log files reside.
+
+### middleware/
+
+Directory that holds the application-specific middleware. Any middleware specified here will override the framework's
+middleware as long as it has the same name.
+
+### public/
+
+Public directory used to serve static content
+
+### scripts/
+
+Application-specific scripts
+
+### test/
+
+Directory to store your application's test suites
+
+
+## Application Configuration
+
+The application can be configured by editing the **bootstrap** file (boot.js), or by modifying its configuration files.
+
+### Configuration Files
+
+The configuration files are stored in the config/ directory. Here's an explanation on what each file contains:
+
+- **base.js**: Base application configuration, directly accessed via `app.config`
+- **database.js**: Settings related to the databases.
+- **regex.js**: Regular Expressions to be used by the application
+- **storage.js**: Settings related to the storages
+- **env/**: Holds scripts for each environment
+
+Each file you add into the config/ directory, will be added as a property of the `app.config` object. You can access 
+the database config in `app.config.database`, the regex config in `app.config.regex` and the storages config in
+`app.config.storage`.
+
+If you add a new configuration file in the config/ directory, let's say: _users.js_, then you can access this configuration
+in the `app.config.users` object.
+
+This convention is really flexible if you want to separate your configuration by keeping it in logical sections & files. It
+enforces greater application maintainability.
+
+### Database Configuration
+
+There is something special to know about the _database.js_ and _storage.js_ files. CoreJS introduces the term
+**resource path**, to refer to a specific configuration.
+
+The database configuration object _must_ contain a _default_ property, which contains the _resource path_ to the configuration
+that will be assumed to be the default for the databases.
+
+For example:
+
+    {
+      default: 'mongodb',
+      mongodb: {
+        host: 'localhost',
+        port: 27017
+      }
+    }
+
+This configuration tells the application that it will use `mongodb` as the default driver. The application will then look
+for a "mongodb" property, located in the configuration. Such resource can be accessed as `drivers/mongodb`.
+
+You can have multiple configurations for one same database. Consider the following example configuration:
+
+    {
+      default: 'mongodb:users',
+      mongodb: {
+        users: {
+          host: 'users.host.com',
+          port: 27017
+        },
+        clients: {
+          host: 'clients.host.com,
+          port: 27017
+        }
+      }
+    }
+
+This configuration exposes two database resources: `drivers/mongodb:users` and `drivers/mongodb:clients`.
+
+This configuration automatically generates the Drivers, which are used to manipulate the databases. The automatically generated
+drivers can be found in `app.drivers`. Storages can be located in `app.storages`.
+
+The same **configuration conventions** apply to the Storages configuration, in the 
+_storages.js_ file.
+
+
+## The Application's Bootstrap File (boot.js)
+
+This file is used to start your application. It is very slim and can do lots of things. It is automatically provided to you 
+when creating your applications. Here's what it looks like:
+
+    var CoreJS = require('../');
+
+    CoreJS.bootstrap(__dirname, {
+  
+      // Server configuration
+      server: {
+        host: 'localhost',
+        port: 8080,
+        multiProcess: false,
+        stayUp: false
+      },
+  
+      // Application environments
+      environments: {
+        default: 'development',
+        development: function(app) {
+          app.debugLog = false;
+        }
+      },
+  
+      // Application events
+      events: {
+        init: function(app) {
+          app.use('logger');
+          app.use('markdown');
+          app.use('body_parser');
+          app.use('cookie_parser');
+          app.use('static_server');
+        }
+      }
+  
+    });
+
+    module.exports = corejs.app;
+
+Here's a detailed explanation of the several configuration sections:
+
+### Server Configuration
+
+- **host** &nbsp; _Hostname to bind your application to_
+- **port** &nbsp; *Port your app will listen. Might get overidden on deployment or by the `PORT_OVERRIDE` env*
+- **multiProcess** &nbsp; *How many node processes the application will use. If `true` will use all available cores*
+- **stayUp** &nbsp; *Whether or not the server should exit on exceptions. If `true` will enable for all environments. You can
+specify the environment (string) to enable this feature, or the environments (array) in which the feature will be enabled*
+
+### Application Environments
+
+- **default** &nbsp; *Environment to use when running the application without specifying an environment*
+- **development** &nbsp; *Function to call when running on the `development` environment*
+- **production** &nbsp; *Function to call when running on the `production` environment*
+- **{environment-name}** &nbsp; *You can run code for any environment by specifying a function and its name*
+
+### Application Events
+
+- **init** &nbsp; *Function to call when the application initializes*
+- **{event-name}** &nbsp; *You can run code for any event by specifying a function and the event name*
+
+The Application's bootstrap file is the _ideal place_ to load your middleware. This is, because you can quickly configure
+the middleware (and configurations to use) directly in the _boot.js_ file, without having to edit other files. This turns out very
+useful when editing via SSH.
+
+The boostrap file is ideal also to enable debugging messages in the application by setting `app.debugLog` to true.
+
+## Applicaton Controllers
+
+CoreJS inherits a few things from the [MVC Architecture](http://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller). 
+Controllers are used to _group_ common routes for a specific _namespace_, or _URL namespace_. For example, consider the following URLs:
+
+    http://myapp.com/blog/post
+    http://myapp.com/blog/archive
+    http://myapp.com/blog/publish?title=Cool+Title&author=Ernie
+    http://myapp.com/awesome
+    http://myapp.com/admin/dashboard
+    http://myapp.com/admin/account
+    
+If you were to create a CoreJS application for these, you have two approaches: Using a single Controller, or using a
+controller for each of your URL namespaces.
+
+### Using a single Controller
+
+If you don't want to deal with multiple controllers, you can use the **MainController**, which is used to group all routes 
+that belong to the root namespace, or `/`.
+
+Here's how you would define all these in MainController:
+
+    function MainController(app) {
+      
+      get('/blog/post', callback);
+      get('/blog/archive', callback);
+      post('/blog/publish', validation, callback);
+      get('/awesome', callback);
+      get('/admin/dashboard', callback);
+      get('/admin/account', callback);
+      
+    }
+
+In the code above, it is worth mentioning that only the _function_ source has been included. Any other requirements for node,
+such as `module.exports = MainController;` have been omitted. The examples that follow will also use the same approach.
+
+In the example above, validation is assumed to be an Object _containing  the validation rules_, and callback should be the
+function to be called when the route is matched.
+
+### Using multiple Controllers
+
+The proper way to do things is to use a controller for each of your application's _URL namespaces_. If we recall the 
+example above, we would need to use the following controlles in our Application:
+
+- **BlogController**: _to handle requests for the blog/ namespace_
+- **AdminController**: _to handle requests for the admin/ namespace_
+- **MainController**: _to handle requests for /awesome_
+
+Routes that don't match a specific controller (such as _/awesome_), should go in MainController.
+
+If you were to create these controllers, you could use the corejs executable:
+
+    $ corejs controller blog admin
+    
+This will create the necessary files to fully support these controllers. When you use `corejs controller`, you use
+the _URL namespace_ the controller should use.
+
+The code you need for each controller is outlined below:
+
+_&bull; app/controllers/main.js_
+    
+    function MainController(app) {
+      
+      get('/awesome', callback);
+      
+    }
+
+_&bull; app/controllers/blog.js_
+    
+    function BlogController(app) {
+      
+      get('/post', callback);
+      get('/archive', callback);
+      post('/publish', validation, callback);
+      
+    }
+    
+_&bull; app/controllers/admin.js_
+    
+    function AdminController(app) {
+      
+      get('/dashboard', callback);
+      get('/account', callback);
+      
+    }
+  
+The routes specified for a controller, are relative to the controller's namespace.
+
+### Special Controller Aliases
+
+If you want to handle routes with dashes, let's say:
+
+    http://myapp.com/account-summary/show
+    http://myapp.com/account-summary/set
+    
+Then, you can create the controller like this:
+
+    $ corejs controller account-summary
+    
+The framework will create **AccountSummaryController**, **AccountSummaryHelper** and all the views needed.
+
+Here's the output of the command above:
+
+    » Created myapp/app/controllers/account-summary.js
+    » Created myapp/app/helpers/account-summary.js
+    » Created myapp/app/views/account-summary/account-summary-index.html
+
+### Related Resources
+
+If you've noticed in the commands above, every time you create a controller, a helper is created for the controller's 
+alias (which is, the _URL namespace_ the controller handles).
+
+This done for _convenience purposes only_, and it doesn't mean that each controller needs its own helper. This is just
+a way of grouping common _view helpers_ using a _prefix_ that matches the controller alias being accessed.
+
+This will be covered with more detail in the [Helpers Section](#application-views_view-helpers).
+
+## Routes
+
+Routes define your application's structure. This allows using any HTTP Method to create RESTful Applications.
+
+Each route defined is relative to the controller namespace where it has been defined.
+
+The route functions are not global, they are local to each _controller_. This is a similar concept as with node's `__filename`,
+`__dirname` and `__module` which are local to each _module_.
+
+The examples that follow are _controller-agnostic_. Have that in mind when reading the examples. Know that they can be used with
+any controller or with MainController. 
+
+Routes defined on MainController are referred to as _global routes_.
+
+### Route Functions
+
+There is a route function for each HTTP Method available. The HTTP Methods supported are:
+
+- GET _&rarr; handled by `get()`_
+- POST _&rarr; handled by `post()`_
+- PUT _&rarr; handled by `put()`_
+- DELETE _&rarr; handled by `delete()`_
+- OPTIONS _&rarr; handled by `options()`_
+- TRACE _&rarr; handled by `trace()`_
+
+This convention helps you develop RESTful Applications or APIs with ease.
+
+  > On this document, you will probably see the route functions be referred as _Route Methods_. This is because of how they are
+  > implemented internally in the framework. Whenever you see the term "Route Method", have in mind that it refers to the actual 
+  > _Route Functions_.
+
+### Route Function Arguments
+
+The route functions can receive various types of arguments:
+
+- route, callback
+- route, validation, callback
+- route, validation, messages, callback
+- route, validation, messages, callback, *methods
+
+The callbacks assigned to a specific route, are usually referred to as _Route Callbacks_, not to be confused with the
+_Route Functions_ (or _Route Methods_).
+
+This section only covers arguments. The sub-sections below will cover usage with more detail.
+
+### Simple Routes
+
+A simple route is the one that only has _(route, callback)_, such as:
+
+    get('/hello', function(req, res) {
+      res.render('index');
+    });
+    
+This route will cover the `/{namespace}/hello` route, and if it's global, it will then be mapped to `/hello`. The callback
+specified will run **if and only if** the route and authentication (more on this later) are matched.
+
+### Regular Expressions
+
+This is an important section, since it covers topic that matter for your application's security.
+
+You can specify validation for a specific URL Fragment, for example:
+
+    get('/user/:user/:location', {user: 'alpha', location: 'alpha'}, function(req, res, params) {
+      res.json(params);
+    });
+
+As you notice, the _validation_ parameter contains two keys matching the route fragments to validate. These are assigned the 
+`alpha` value, which is the validation criteria. The validation criteria can be one of the following:
+
+- A _Regular Expression Alias_
+- A Regular Expression Object or Literal
+
+A _Regular Expression Alias_ is a regular expression that has been defined and named in the application's regular 
+expressions configuration: `app/config/regex.js`, which are also available in the `app.regex` object.
+
+Any key present in the application's regex object is considered to be a _Regular Expression Alias_.
+
+Each RegExp alias will validate a fragment of the URL. Internally, a master regular expression is created to validate
+the entire URL.
+
+There are some requirements for normal regular expressions to be used in routes:
+
+- The RegExp must not contain regular expression flags. That is: `i`, `g`, `m`, etc.
+- The RegExp must contain **start/end** matches, since each _fragment_ is compared in isolation from others.
+
+That being said, the folowing regexes are valid:
+
+    /^(one|two|three)$/
+    /^john-doe$/
+
+And these are invalid:
+
+    /(one|two|three)/
+    /john-doe/
+  
+Failure to meet the conditions outlined above, would result in your routes being accessed in undesirable situations, which 
+might represent a security threat to your application, since sensitive data might be exposed.
+
+### Validation of Route Parameters
+
+Consider the following example:
+
+    get('/user/:user/:location', {user: 'alpha', location: 'alpha'}, function(req, res, params) {
+      res.json(params);
+    });
+    
+Whenever you match url fragments, the _Route Callbacks_ will be provided with an extra argument: `params`, which is an
+object containing the fragment keys and the provided values. For example:
+
+    http://myapp.com/user/ernie/dashboard
+    
+The `params` argument will contain the following information:
+
+    {
+      user: "ernie",
+      location: "dashboard"
+    }
+
+### Accessing Raw Query Data
+
+Routes can define validation for query parameters. Let's suppose your application should handle this URL:
+
+    http://myapp.com/purchase/99?quantity=1&color=red
+    
+Then, the route we need looks like this:
+
+    get('/purchase/:id', {id: 'integer', quantity: 'integer', color: /^(red|green|blue)$/}, 
+    function(req, res, params) {
+      console.log(params);
+      res.json(req.queryData);
+    });
+    
+The validation process is a two-step process:
+
+1. The _URL Fragment_ is validated
+2. The Query Parameters are validated (manually)
+
+The following URL would get HTTP/404, since the `:id` fragment fails to validate:
+
+    http://myapp.com/purchase/99a?quantity=1&color=red
+  
+The validation for _Query Parameters_ does not happen automatically as with the url fragments validation. You can access
+the query data before validating in `req.queryData`.
+
+The URL above would render the following JSON response:
+
+    {
+      "quantity": "1",
+      "color": "red1"
+    }
+    
+As you can see, `req.queryData` contains **only** the _Query Parameters_, _not_ the URL fragments.
+    
+On the other hand, in the console you will see the following:
+
+    { id: '99', quantity: undefined, color: undefined }
+    
+The `params` object (printed on the console) contains the value for the `id` _route parameter_. The keys belonging to the 
+_query parameters_ are set to `undefined`.
+
+### Validation of Query Parameters
+
+Following up with the previous example, we are not interested in validating the query parameters. In the previous example,
+this URL should still access the route:
+
+    http://myapp.com/purchase/99?quantity=BLAH&color=maroon
+    
+Why is that? You may ask. That is, because we were accessing _Unvalidated_ (or raw) data. The Route parameter `:id` has 
+been validated. The _Query Parameters_ are not yet validated, unless you want to. This is what this section is about.
+
+To validate query parameters, the Controller instance provides a method for this: `getQueryData`.
+
+    get('/purchase/:id', {id: 'integer', quantity: 'integer', color: /^(red|green|blue)$/}, 
+    function(req, res, params) {
+      this.getQueryData(req, function(fields) {
+        res.json(fields);
+      });
+    });
+    
+It is important to mention, that _Route Callbacks_ **run on the controller instance's context**. This means, the `this` object
+points to the controller instance currently accessing the route.
+
+This means you have access to all the methods provided by [Controller](https://github.com/corejs/corejs/blob/master/lib/controller.js).
+
+Using `this.getQueryData` ensures that the _Query Parameters_ are validated exactly the same as the _Route Parameters_. Your
+application will automatically respond with HTTP/404 on failure to validate both url fragments &amp; query parameters.
+
+The validated fields are passed in the `fields` argument of the `getQueryData` callback.
+
+Validation is also closely integrated with the [CSRF Middleware](/middleware#csrf). This means, you can provide an extra
+argument to `getQueryData`, and that is the _CSRF Token_, which will add an extra layer of validation. For more info, 
+check out the CSRF Middleware [documentation](/middleware#csrf).
+
+### Validation of URL & Query Parameters
+
+In the example above, this is exactly what has been done: Validate Query Parameters as well as Query Data.
+
+There is only one thing to have in mind when you're validating both request &amp; query params:
+
+  > The URL Fragments and Query Parameter names should be **different**, to prevent validation collisions. This is to prevent any 
+  > unexpected behavior that can arise from this approach.
+
+### Validation Messages
+ 
+On validation failure, users will be responded with HTTP/400. You can specify an error message to display when data fails 
+to validate. Here's how you do it: 
+ 
+    get('/json', {
+      file: 'alpha', 
+      rev: 'integer'
+    }, {
+      file: "You must supply a valid filename",
+      rev: function(rev) { return "Invalid revision: " + rev; }
+    }, 
+    function(req, res) {
+      this.getQueryData(req, function(fields) {
+        res.json(fields);
+      });
+    });
+ 
+This is very powerful, and can be used in many scenarios. For example, if the following URL is accessed:
+
+    http://myapp.com/json?file=99&rev=INVALID
+    
+It will fail to validate, and you will get the message _"You must supply a valid filename"_.
+
+If a valid file is specified, and invalid revision number:
+
+    http://myapp.com/json?file=tuesday_log&rev=INVALID
+
+It will fail to validate, and you will get the message: _"Invalid revision: INVALID"_.
+
+The validation messages will be displayed either in HTML or in plain text, depending on the type of request:
+
+- For normal Requests, the response will be sent in _HTML_.
+- For `XMLHttpRequest`s (AJAX), the response will be sent in _Plain Text_.
+ 
+This behavior allows your application to use its own validation mechanisms to validate form data.
+ 
+### Routes with multiple methods
+ 
+You can specify a route that allows multiple HTTP Methods. Any extra arguments you pass after the _Route Callback_,
+are assumed to be strings that represent which additional methods will be allowed for the route:
+
+    get('/', function(req, res) {
+      res.json({
+        msg: "Hello World!",
+        method: req.method
+      });
+    }, 'post', 'put');
+    
+If you access `http://myapp.com/` using `POST`, here's the response you will receive:
+
+    {
+      "msg": "Hello World!",
+      "method": "POST"
+    }
+    
+This functionality may become very useful in some situations.
+ 
+## Controller Authentication &amp; Filters
+ 
+  > Controller filters add an additional _authentication layer_ to your Controllers. By analyzing the _request_ and _response_
+  > objects, you can determine whether or not the user is allowed to access the controller's resources.
+
+Let's say we have the following Controller:
+
+    function MainController(app) {
+      
+      get('/', function(req, res) {
+        res.end("WELCOME!");
+      });
+
+      get('/:page', {page: 'alpha'}, function(req, res, params) {
+        res.json(params);
+      });
+      
+    }
+    
+This will respond with _"WELCOME"_ when accessing _/_, and will send a JSON response when a regular page is accessed. We'll 
+implement a very basic authentication, using a GET parameter called `pass` using a _Filter_.
+
+This is the controller code, after the filter has been implemented:
+
+    function MainController(app) {
+  
+      this.authFilter(function(req, res, promise) {
+        if (req.queryData.pass === '1234') promise.emit('success');
+        else res.rawHttpMessage(403, true);
+      });
+  
+      get('/', function(req, res) {
+        res.end("WELCOME!");
+      });
+  
+      get('/:page', {page: 'alpha'}, function(req, res, params) {
+        res.json(params);
+      });
+  
+    }
+    
+Now, if you try to access any of your controller's resources without providing the `pass` query parameter, you will not be
+able to access the routes, and will be responded with a `403 Forbidden` message.
+
+In this case, we're using `req.queryData.pass` to get the `pass` query parameter, we're not doing any validation on it, just 
+getting it right as it was received. If you need validation, then `this.getQueryData` should be used.
+
+### Implementation Details
+
+There are a few important things to know about Controller Filters to be able to use them at full potential:
+
+- You add them by doing `this.authFilter(callback)` from within any controller
+- A Controller can have multiple authentication filters by running `this.authFilter` multiple times.
+- The _Filter Callback_ runs in the _Controller's Context_
+- The _Filter Callback_ receives three parameters:  _request_, _response_ and _promise_
+- If validation succeeded, you emit the `success` event on the promise
+- If validation fails, you need to send a response manually
+
+### Auth Filters &amp; Sessions
+
+When using the [Sessions Middleware](/middleware#session), it automatically provides a authentication filter for you, which
+deeply integrates with both the controller and your application.
+
+If/when you enable the _Sessions Middleware_, you can specify a property in your controllers, to determine
+if such controller requires authentication: the `authRequired` property.
+
+### The authRequired property
+
+This only applies if the _Sessions Middleware_ is enabled. It has no effect otherwise.<br/>
+For a detailed documentation on this property, refer to the _Sessions Middleware_ [documentation](/middleware#session).
+
+
+## Application Views
+
+This section covers everything you need to know about views. Views are rendered by calling `res.render` from of your
+_Route Callbacks_. The view paths will be resolved depending on the _view_ specified, as well as the running _Controller_.
+
+### View Lookup
+
+It is important to master the view lookup process to be able to use views at their full potential. The table below shows the 
+argument passed to `res.render`, and the corresponding resolved path. 
+
+In the table below: 
+
+- The controller is assumed to be _MainController_. View paths are relative to _app/views/_.
+- The view extensions are automatically detected, unless manually specified.
+
+| Parameter of `res.render()` | Resolved View Path |
+|----------|----------|
+| index |  main/main-index.html
+| index.html |  main/index.html
+| @header |  __layout/header.html
+| @header.mustache |  __layout/header.mustache
+| @dir/view |  __layout/dir/view.html
+| @dir/view.mustache |  __layout/dir/view.mustache
+| #404 |  __restricted/404.html
+| #404.mustache |  __restricted/404.mustache
+| #dir/view |  __restricted/dir/view.html
+| #dir/view.mustache |  __restricted/dir/view.mustache
+| main/index |  main/main-index.html
+| /main/index |  main/main-index.html
+| main/index.html |  main/index.html
+| /static |  __static/static.html
+| /static.mustache |  __static/static.mustache
+
+You can see how views are used by having a look at the Controllers from the [Test Suite](https://github.com/corejs/corejs/tree/master/test/fixtures/test.skeleton/app/controllers).
+
+### View Parameters
+
+When rendering views with `res.render`, you can pass extra parameters to the view. For example:
+
+    res.render('index', {
+      activePage: 'features',
+      message: "Hello World!"
+    });
+    
+These parameters will be available as locals within the view.
+
+### View Locals
+
+When rendering views, you have a set of _local variables_ you have access to inside views:
+
+- **corejs** &nbsp; _CoreJS global (available as local)_
+- **app** &nbsp; _Application singleton_
+- **req** &nbsp; _Request Object_
+- **res** &nbsp; _Response Object_
+- **params** &nbsp; _Pointer to `req.params`_
+- **session** &nbsp; _Pointer to `req.session`_
+- **cookies** &nbsp; _Pointer to `req.cookies`_
+- **locals** &nbsp; _View locals object (circular reference)_
+
+### Raw Views
+
+CoreJS introduces the concept of _Raw Views_, to the views that don't render a header/footer. These are still rendered in
+`text/html`, but only the requested view is rendered, not the other template parts.
+
+> By default, the Application has _Raw Views_ disabled. You can enable _Raw Views_ globally within your application, by
+> editing **config/base.js** and setting `rawViews` to true.
+
+The _raw_ parameter is passed to `res.render` as a boolean in its last argument:
+
+    res.render('index', {
+      activePage: 'features',
+      message: "Hello World!"
+    }, true);
+    
+There are some template engines that force _Raw Views_, due to their inner workings. These are:
+
+- Haml
+- Haml-Coffee
+- Jade
+
+If you're using any of these Template Engines, then the templates won't be _MultiPart_. In other words, you will need to
+do the templating and inclusion of header/footer and other parts from within the view itself. You can still use view
+partials normally.
+    
+### View Partials
+
+View Partials are one of the beauties of CoreJS. You can mix &amp; match any view engine. Your application doesn't actually
+care which template engine you use, you can still use partials.
+
+One thing to have in mind, your template's rendering engines will work just fine. This section covers the _View Partials_, as
+implemented across all the view engines within CoreJS.
+
+Important things to know about view partials:
+
+- Are exposed as local functions within your views
+- Can be located anywhere within the controller's _views directory_ path
+- Can be located anywhere within the *__layout* directory path
+- Their filenames should start with an underscore
+- The view extension determines the template engine to be used
+- Partial functions *must* receive the *locals* object as argument
+
+To learn to create view partials, refer to the [Creating View Partials](#creating-application-resources_creating-view-partials) section.
+
+  > The View Partials are exposed as local functions within your views. Most views allow running regular JavaScript functions and
+  > receiving parameters passed as their _locals_. CoreJS uses this common approach and exploits its full potential.
+
+The table below shows the location and the explosed function name. Paths are relative to _app/views_.
+
+| View Partial File | Exposed View Function |
+|-------------------|-----------------------|
+| main/\_partial.html | main\_partial
+| blog/post/\_comment.html | blog\_post\_comment
+| __layout/\_sidebar.html | layout\_sidebar
+| __layout/widget/rss.html | layout\_widget\_rss
+
+To render a view partial inside a view, just call the function. The following example uses the Liquor engine to import a view
+partial into the view:
+
+    <div class="post-comment">
+      #{blog_post_comment(locals.comments)}
+    </div><!-- .post-comment -->
+
+### View Helpers
+
+View helpers are also functions that are exposed into the views. They are similar in functionality to view partials, but
+they end up in the views in a slightly different way.
+
+  > View Helpers are generated from the Methods of the Helpers defined in your Application.
+
+Let's say you have created the following _Helpers_ in your Application:
+
+&bull; _app/helpers/main.js_
+
+    function MainHelper(app) {
+  
+      this.hello_world = function(data) {
+        return JSON.stringify(data);
+      }
+      
+    }
+
+&bull; _app/helpers/accounts.js_
+
+    function AccountsHelper(app) {
+      
+      this.show_info = function(data) {
+        return JSON.stringify(data);
+      }
+      
+    }
+    
+&bull; _app/helpers/dashboard.js_
+    
+    function DashboardHelper(app) {
+      
+      this.render_widget = function(data) {
+        return JSON.stringify(data);
+      }
+      
+    }
+
+Then, your views will have the following methods exposed:
+
+- `hello_world`
+- `$accounts_show_info`
+- `$dashboard_render_widget`
+
+The following are important things to know about View Helpers:
+
+- Are added into the views from the _Helper Methods_ defined in your Application
+- The methods exposed by _MainHelper_ are not prefixed
+- The methods exposed by the other helpers are prefixed with the _helper alias_
+
+
+### View Extensions
+
+The following table shows the view extensions for each Template Engine:
+
+| Template Engine |  Engine Alias | View Extensions |
+|-----------------|------------------|
+| CoffeeKup | coffeekup | coffeekup, ck.html
+| DoT | dot | dot, dot.html
+| Eco | eco | eco, eco.html
+| EJS | ejs | ejs, ejs.html
+| Haml | haml | haml, haml.html
+| Haml-Coffee | hamlcoffee | hamlc, haml.coffee, hamlc.html
+| Handlebars | handlebars | handlebars, handlebars.html, hb.html
+| Hogan.js | hogan | hogan, hogan.html, hg.html
+| Jade | jade | jade, jade.html
+| Jazz | jazz | jazz, jazz.html
+| jQuery Templates | jqtpl | jqtpl, jqtpl.html, jq.html
+| JSHtml | jshtml | jshtml
+| Kernel | kernel | kernel, kernel.html, k.html, khtml
+| Liquor | liquor | liquor, liquor.html, lq.html
+| Swig | swig | swig, swig.html, sw.html
+| Whiskers | whiskers | whiskers, whiskers.html, wk.html
+
+  > You can edit and set new extensions by editing your Application's **config/base.js**, under the _engines_ section. Each
+  > property you set will refer to the engine extension, and the value is the _Engine Alias_.
+
+
+## Application Models &amp; API
+
+Models provide an abstraction of data operations. CoreJS Models have _ORM_ built-in. They are _database-agnostic_ by nature, which
+means you can define your data structure in the model, and you don't need to care about the underlying database.
+
+Models use Drivers behind the scenes to perform database operations. The Drivers themselves perform low-level operations in the
+database to manipulate the model's data.
+
+### Defining the Driver
+
+Each model needs a driver. Models by default inherit the _default_ driver, configured in _config/database.js_.
+
+To connect the model with a Driver, you need to provide the Driver's _resource path_:
+
+    this.driver = 'mongodb:users'
+    
+For more info on _resource paths_, please refer to the [Application Configuration](#application-configuration) section.
+
+### Defining Properties
+
+The model's properties defines is structure and data types. These are used for _automatic typecasting_ and _validation_ purposes.
+
+The `properties` property defines the model's information. Here's how you set it up:
+
+    this.properties = {
+      user    : {type: 'string', required: true, validates: 'alnum_underscores'},
+      pass    : {type: 'string', required: true, validates: 'password'},
+      friends : {type: 'integer', validates: 'integer', default: 0},
+      valid   : {type: 'boolean', default: true},
+      date    : {type: 'timestamp', validates: 'timestamp', default: function() { return new Date(); }},
+      object  : {type: 'object', default: {a: 1, b: 2, c: 3}},
+      array   : {type: 'array', default: [1,2,3,4]}
+    }
+    
+The following table explains the different keywords:
+
+| Property | Description |
+|-----------|-------------|
+| **type**     | Type of data. Available types are: (string|integer|boolean|timestamp|object|array)
+| **required** | Whether or not  the field is required
+| **validates** | Regular Expression or Alias used to validate the property
+| **default** | Sets the default value for the property. Accepts both values &amp; functions
+
+  > The model will automatically typecast values to their respective JavasCript Native Objects.
+  
+One of the most powerful things about CoreJS's model implementation, are the _Object Types_. You can safely store _JavaSript
+Hashes_ and _Arrays_ into model properties.
+
+The _type_ keyword will define how the data will be typecasted. You still need to set validation rules, since validation is
+a separate process.
+
+When validating, here's how the framework knows which Regular Expression to use:
+
+1. RegExp Literal
+2. Model-Specific Validation
+3. Application Regular Expression Alias
+
+### Defining Validation
+
+The Model Validation uses the same approach as [Route Validation](#routes). It will use the Regular Expressions defined 
+by the application. Any _Regular Expression Alias_ can be used to validate fields.
+
+There is an extra layer of validation provided by models: the `validation` property, which defines
+Model-Specific validation rules. Imagine it as _Regular Expression Aliases_ that are only avaliable to the model.
+
+Here's how you define the validation in a model:
+
+    this.validation = {
+      'account': function(str) {
+        return checkAccount(str);
+      },
+      'username: /^(ernie|james)$/
+    }
+
+You can then use these validation aliases freely to validate your model's properties. Defining validation for the model is optional,
+you can either use RegExp Literals, or the Applications' Regular Expressions.
+    
+### The Model API
+
+The table below shows the Methods provided by all Model instances:
+
+| Method | Parameters | Function |
+|--------|------------|----------|
+| new &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | o, cdata, callback &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Creates a new model object. Saves into the database, then creates the model with the provided data.
+| create | o, cdata, callback | Alias of _new_
+| insert | o, cdata, callback | Same behavior as new, but instead of returning a new object, returns the ID for the new database entry.
+| add | o, cdata, callback | Alias of _insert_
+| get | o, cdata, callback | Gets an new model object.
+| find | o, cdata, callback | Alias of _get_
+| getAll | o, cdata, callback | Gets all records from the database
+| findAll | o, cdata, callback | Alias of _getAll_
+| save | o, cdata, callback | Saves the model data into the Database.
+| update | o, cdata, callback | Alias of _save_
+| delete | o, cdata, callback | Deletes the model data from the database.
+| destroy | o, cdata, callback | Alias of _delete_
+
+Here's the meaning of the Parameters:
+
+- **o** &nbsp; _Object containing the model properties to query_
+- **cdata** &nbsp; _[Cache Data](#database-drivers_cache-keywords) to pass to the driver: [ cacheID, cacheInvalidate, cacheTimeout ]_
+- **callback** &nbsp; _Callback to call upon completion_
+
+### Application's Model Methods
+
+Models can be accessed in several ways. All models expose things in a similar way, so explaining with a single model would
+be enough to understand the concept. For the sake of this example, we'll assume _UsersModel_.
+
+The _UsersModel_ instance can be accessed via `app.usersModel` and `app.models.usersModel`. Each model instance has the methods
+documented in the previous section.
+
+The table below shows the model methods and their equivalent:
+
+| Method |  Equivalent |
+|--------|-------------|
+| app.model.newUser | app.usersModel.new
+| app.model.createUser | app.usersModel.create
+| app.model.insertUser | app.usersModel.insert
+| app.model.addUser | app.usersModel.add
+| app.model.getUser | app.usersModel.get
+| app.model.findUser | app.usersModel.find
+| app.model.findAllUsers | app.usersModel.findAll
+| app.model.saveUser | app.usersModel.save
+| app.model.updateUser | app.usersModel.update
+| app.model.deleteUser | app.usersModel.delete
+| app.model.destroyUser | app.usersModel.destroy
+
+
+### The Model Generator Concept
+
+CoreJS introduces the _"Model Generator"_ concept. In JavaScript &amp; Node.js, most callbacks are asynchronous. This makes the
+usual ORM approach to create an object and _then_ synchronously saving its settings is not that intuitive with most database 
+modules running asynchronously.
+
+Each _Model Instance_ is itself a _Model Generator_. The term can also be interchangeable with _Model Factory_.
+
+The Model Object does not operate directly on model objects. _Model Objects_ (introduced on the next section) use the methods
+provided by the Model API, to perform the CRUD operations.
+
+  > Model Generators are used to retrieve a group of_ Models Objects_. The returned objects will be directly related to the parameters
+  > you pass to the Model Generator's method.
+
+The term exists to make a _distinction_ between the object that _generates_, and the object that is _generated_.
+
+### The Model Object Concept
+
+Model Objects are individually retrieved by _Model Generators_. They contain a set of methods totally different from the ones
+found in the _Model Generator_.
+
+  > Relationships defined in Models expose their own methods into the Model Objects created by the Models
+  
+The sections below will explain in detail which methods are exposed by each relationship. If multiple relationships are set 
+on the model (either _Inbound_ or _Outbound_), their specific methods will end up in the Model Object.
+
+You can access the Model Object's prototype via the `modelObjectProto` on the Model Instance. In this case, the term "Model" refers
+to the _Model Generator_. The object is itself bound to the `__proto__` property of all model instances. The real prototype is 
+found on `modelObjectProto.constructor.prototype`.
+
+Each Model Object as a `generator` property, which points to the _Model Generator_ that created it.
+
+Model Objects are analogous to the models you see in other Application Frameworks or ORM Implementations. The following table
+shows the Methods provided by the Model Object's _Prototype_:
+
+| Method | Arguments | Description |
+|--------|-----------|-------------|
+| save | cdata, callback | Saves the model data
+| update | cdata, callback | Alias of _save_
+| sync | cdata, callback | Alias of _save_ 
+| delete | cdata, callback | Removes model
+| remove | cdata, callback | Alias of _delete_
+| destroy | cdata, callback | Alias of _delete_
+| createMulti | options | Creates a multi-wrapped object from Model Object
+
+Here's the meaning of the Parameters:
+
+- **cdata** &nbsp; _[Cache Data](#database-drivers_cache-keywords) to pass to the driver: [ cacheID, cacheInvalidate, cacheTimeout ]_
+- **callback** &nbsp; _Callback to call upon completion_
+- **options** &nbsp; _Options to pass to the Multi constructor_
+
+### Query Caching
+
+Models inherit query caching because they have a Driver under the hood. This means that they automatically receive the 
+caching functionality. 100% Free.
+
+### Model Relationships
+
+CoreJS implements relationships between models. Relationships allow _Model Objects_ to connect with other model objects, adding
+the additional ability to perform actions on such relationships.
+
+Relationships only affect _Model Objects_. Each relationship, depending if it is _Inbound_ or _Outbound_, will modify either
+the source or the destination model.
+
+  > The Relationships implementation makes use of **Linguistic Inflection**, so the names should be specified in a specific form, either
+  > _plural_ or _singular_ depending on the relationship being established.
+
+An **Inbound** Relationship is where the _source_ model is the target receiving the link to the _destination_ model.
+
+An **Outbound** Relationship is where the _destination_ model is the target receiving the link to the _source_ model.
+
+The sections below explain the relationships, and their specific requirements and exposed methods.
+ 
+### hasOne Relationship
+
+This is an _Inbound_ relationship, affecting the model which establishes the connection. This relationship consists on the following:
+
+  > The model establishing a connection, receives a one-to-one connection with the target model. A _string_ property will be assigned into the
+  > Model Generator, which will define the link to the destination model.
+
+Here's how you set a _hasOne_ relationship:
+
+    this.hasOne = 'user';
+    
+The target model _must_ be specified in _singular form_. This relationship will set a `user` property into the _Model Generator_, which
+links to a _Model Object_ of _UsersModel_.
+
+Additionally, you can set the relationship to an _alias_ of the target model. This allows you to use a different property other
+than the singular form of the target model:
+
+    this.hasOne = 'buddy(user)';
+    
+This will set a `buddy` property into the _Model Generator_, which links to a _Model Object_ of _UsersModel_.
+
+Based on the property assigned, the _Model Object_'s prototype will be extended with new methods. The following table outlines
+the inherited methods on the _Model Object_ establishing the relationship. A property of `user` is assumed to be added:
+
+| Method | Arguments&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Provides | Description |  
+|---------------------|-----------|----------|-------------|
+| getUser | callback | err, model | Gets the linked model
+| setUser | model/id, callback | err | Links model to self
+| removeUser | callback | err | Breaks the relationship with model
+| deepRemoveUser | callback | err | Breaks relationship with model and deletes the unlinked model from database
+
+Assuming _AccountsModel_ has set the relationship, the following example shows how to use the relationship:
+
+    app.model.getAccount({id: 99}, function(err, account) {
+      account.deepRemoveUser(function(err) {
+        if (err) throw err;
+        else console.exit("Successfully unlinked & removed user from account"); // Account now has no user linked
+      });
+    });
+
+### hasMany Relationship
+
+This is an _Inbound_ relationship, affecting the model which establishes the connection. This relationship consists on the following:
+
+The model establishing the connection receives a one-to-many connection with the target model. An _array_ property will be assigned
+into the Model Generator, which will define the links to the destination model.
+
+Here's how you set a _hasMany_ relationship:
+
+    this.hasMany = 'users';
+    
+You can also specify an array of target models:
+
+    this.hasMany = ['groups', 'buddies(users)']
+    
+Aliases work exactly the same for this relationship as well. The only difference is that _plural form_ must be used to define the target models.
+
+The example above will set a `groups` array property into the _Model Generator_, which contains links to _Model Objects_ of _GroupsModel_. Additionally,
+a `users` property will be added, containing links to _Model Objects_ of _UsersModel_.
+
+Based on the property assigned, the _Model Object_'s prototype will be extended with new methods. The following table outlines
+the inherited methods on the _Model Object_ establishing the relationship. A property of `buddies` is assumed to be added:
+
+| Method | Arguments&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Provides&nbsp;&nbsp;&nbsp;&nbsp; | Description |  
+|---------------------|-----------|----------|-------------|
+| addBuddy | model/id, callback | err | Appends a link to model in self. Restricts to a single item.
+| addBuddies | array, callback | err | Connects Models or ID's connected in array with self
+| getBuddy | model/id, callback | err, model | Gets a linked model
+| getBuddies | array, callback | err, models | Retrieves the specified models (as long as a connection exists)
+| removeBuddy | model/id, callback | err | Unlinks the model from self. Restricts to a single item.
+| removeBuddies | array, callback | err | Breaks the relationsip with the specifeid models/ids (as long as a connection exists)
+| deepRemoveBuddy | model/id, callback | err | Breaks relationship with model and deletes the unlinked model from database. Restricts to a single item.
+| deepRemoveBuddies | array, callback | err | Breaks relationship with models and deletes the unlinked models from database.
+
+Assuming _UsersModel_ set the relationship, the following example shows how to use the relationship:
+
+    // we got buddy earlier
+    
+    app.model.getUser({name: 'ernie'}, function(err, user) {
+      if (err) throw err;
+      else user.addBuddy(buddy, function(err) {
+         if (err) throw err;
+         else console.exit("Buddy and User are now pals");
+      });
+    });
+
+### belongsTo Relationship
+
+This is an _Outbound_ relationship. Setting this relationship is exactly the same as setting a _hasOne_ relationship, but swapping
+source and destination models. 
+
+For example:
+
+    // Relationship being set from UsersModel
+
+    this.belongsTo = 'company.boss'
+    
+Assuming the relationship is being set by _UsersModel_, this would translate to:
+
+    // Relationship as translated into CompaniesModel
+    
+    this.hasOne = 'boss(user)';
+    
+The same rules for _hasOne_ apply. You need to specify `{target-model}.{target-property}`. Both the _target model_ and _target property_
+should be specified in _Singular Form_.
+
+### belongsToMany Relationship
+
+This is an _Outbound_ relationship. Setting this relationship is exactly the same as setting a _hasMany_ relationship, but swapping
+the source and destination models.
+
+For example:
+
+    // Relationship as being set from UsersModel
+    
+    this.belongsToMany = 'company.employees'
+    
+Assuming the relationship is being set from _UsersModel_, this would translate to:
+
+    // Relationship as translated into CompaniesModel
+    
+    this.hasMany = 'employees(users)';
+    
+The same rules for _hasMany_ apply. You need to specify `{target-model}.{target-property}`. The _target model_ is specified in 
+_Singular Form_, and the _target property_ should be specified in _plural form_.
+
+
+## Database Drivers
+
+Drivers provide a set of methods to operate with the underlying database, as well as a _Model API Implementation_, which allows
+the driver to be used with a Model.
+  
+Besides handling model internal operations, Drivers can be used by themselves. Here's how you get a _Driver Instance_ so you
+can work with it:
+
+    app.getResource('drivers/mongodb:users', function(driver) {
+      console.exit(driver);
+    });
+    
+You specify the _resource path_ to the Driver you want to use. Such driver uses the configuration specified in 
+_config/database.js_. Driver instances are available via `app.drivers`.
+
+CoreJS implements the following Drivers, which can be used to power Models:
+
+- [MongoDB](https://github.com/corejs/corejs/blob/master/drivers/mongodb.js)
+- [MySQL](https://github.com/corejs/corejs/blob/master/drivers/mysql.js)
+
+If you're interested in contributing a new Database Driver, you're welcome to do so. You have a clean API to work with, so
+it's pretty easy to implement new Database Drivers into the framework. Also, the source has been documented properly.
+    
+  
+### Query Caching
+
+You can attach a Storage into a Driver, which will be used as the underlying _Cache Storage_ for such driver.
+
+The Storage you define in the Driver's configuration will be inherited by the Model that uses it.
+  
+To enable query caching in a driver, just specify the _Resource Path_ pointing to the storage you want to use
+as the caching layer. This is done in the Database configuration, on _config/database.js_.
+
+### Cache Keywords
+
+The following extra properties can be specified to trigger cache operations:
+
+- **cacheID** &nbsp; This will set the ID for the current cache. If the cache is not stored, the retrieved query will then be cached. 
+Any subsequent queries will return the cached result. This will happen until the cache is _invalidated_.
+- **cacheInvalidate** &nbsp; This will invalidate a cacheID, and will force any subsequent queries to regenerate the cache for the specified ID.
+- **cacheTimeout** &nbsp; Amount of seconds in which the cacheID will be invalidated. The effect will be the same as cacheInvalidate. This only works if the storage
+backend supports TTL Expiration.
+
+This approach is both useful and interesting. Imagine you have a heavy query in your homepage, you need to retrieve 100 records in a 
+rather expensive query. You can then cache the query using the ID `homepage_query`.
+
+The cache will always be valid, _unless_ a new user is added. So, whenever you add a new user you need to _invalidate_ the `homepage_query`, so
+the next time the homepage is accessed, the cache will be regenerated, this time accounting for the new user that has just been
+created.
+
+Internally, this all is done behind the scenes, and in a very organized way. You don't need to set any timeouts (even though you can), since
+the cache will remain valid until something invalidates it.
+
+### Cache storage
+
+This example uses the [MongoDB](https://github.com/corejs/corejs/blob/master/drivers/mongodb.js) driver to cache the `homepage_query`:
+
+    mongodb.queryAll({
+      collection: 'users',
+      fields: {'user': 1, 'pass': 1},
+      cacheID: 'homepage_query',
+    }, function(err, docs) {
+      console.log([err, docs]);
+    });
+    
+Any subsequent queries you perform with this cacheID, will return the cached content if it exists, otherwise it will query the 
+records and cache the results into the `homepage_query` ID. This will happen until the cache is invalidated.
+
+### Cache Invalidation
+
+This example uses the [MongoDB](https://github.com/corejs/corejs/blob/master/drivers/mongodb.js) driver to invalidate the `homepage_query` cache:
+
+    mongodb.insertInto({
+      collection: 'users',
+      values: {user: 'hello', pass: 'passme'},
+      cacheInvalidate: 'homepage_query'
+    }, function(err, docs) {
+      console.log([err, docs]);
+    });
+    
+This query will invalidate the `homepage_query` cache, and will force any subsequent requests to regenerate it.
+
+## Storages API
+
+Storages provide a common transport which can be used as a caching layer, or as a storage layer for the Application, 
+Drivers and Models.
+
+Storages are configured in _config/storage.js_. Here's how you get a storage:
+
+    app.getResource('storages/redis:session', function(storage) {
+      console.exit(storage);
+    });
+    
+All storages implement a common API, that provide a layer of abstraction between two endpoints. The following table explains
+the Storage API Methods:
+
+| Method | Arguments&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Provides&nbsp;&nbsp;&nbsp;&nbsp; | Description |
+|--------|-----------|----------|-------------|
+| get | key, callback | err, results | Retrieves one or more records from the storage backend (key accepts string/array)
+| getHash | key, callback | err, hash | Retrieves a hash from the storage backend
+| set | key, value, callback | err | Inserts one or more records into the storage backend. Key can also be an object with keys/values (skip value)
+| setHash | key, hash, callback | err | Inserts a hash (object) into the storage backend
+| updateHash |  key, object, callback | err | Updates a hash with new values in object
+| deleteFromHash | hash, key, callback | err  | Deletes one or more keys from a specific hash
+| delete | key, callback | err | Deletes one or more records from the storage backend
+| rename | oldkey, newkey | err | Renames a key
+| expire | key, timeout, callback | err  |  Makes a specific key expire in a certain amount of time (only on backends that support TTL)
+| multi | config | N/A | Allows execution of multiple storage operations
+
+All the methods have the same effect, regardless of which storage backend you use. You are guaranteed to receive the same results.
+
+### Available Storages
+
+CoreJS provides the following Storages:
+
+- [MongoDB](https://github.com/corejs/corejs/blob/master/storages/mongodb.js)
+- [Redis](https://github.com/corejs/corejs/blob/master/storages/redis.js)
+
+For more information about the Storage API, you can check out [its source](https://github.com/corejs/corejs/blob/master/lib/storage.js).
+
+[/markdown]

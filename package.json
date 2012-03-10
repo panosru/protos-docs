@@ -1,0 +1,8 @@
+{
+  "name"              : "skeleton",
+  "description"       : "CoreJS Application Skeleton",
+  "version"           : "0.0.0",
+  "main"              : "boot.js",
+  "engines"           : { "node": ">= 0.6.0" },
+  "dependencies"      : { }
+}

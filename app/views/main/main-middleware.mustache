@@ -1,0 +1,649 @@
+
+[markdown]
+
+## asset_compiler
+
+Provides the application with asset compilation features.
+
+### References
+
+- http://lesscss.org/
+- http://coffeescript.org/
+- http://learnboost.github.com/stylus/
+  
+### TODO
+
+- Implement a compressor/minifier
+- Ability to merge several compiled/minified files into a single file to serve in production
+  
+### Configuration options
+
+- **watchOn** &nbsp; _Array containing environments in which the assets will be automatically compiled on change_
+- **compile** &nbsp; _Extensions to compile and/or watch._
+- **compileExts** &nbsp; _Object containing the target extensions of compiled assets. Contains {ext: outExt}_
+- **compilers** &nbsp; _Object containing the functions that compile the target extensions._
+- **assetSourceAccess** &nbsp; _If set to true, will enable access to the asset sources (disabled by default)_
+  
+If the `compile` array is found in the middleware configuration object, then the default assets (such as
+less, coffee & stylus) will be disabled and replaced with your own extensions. This allow to only watch
+for .coffee files, for example.
+  
+### Adding Extensions & Compilers
+
+You can define your own extensions and compilers to be used by the application. CoreJS provides a solid
+platform in which you can extend upon, and integrate your own asset compilers. Here's how you do it:
+
+1. Add the custom extension in the `compile` array
+2. Add the target extension of the compiled file in the `compiledExts` object
+3. Add the Compiler function, receiving [source, callback] into the `compilers` object. The function should run the callback with [err, code]
+
+These are the steps required to register your own extension to compile/watch. You will now be able to 
+compile and watch the files with your custom extension.
+
+You don't need to worry about preventing access to the source of your custom extension, since the middleware
+will automatically respond with HTTP/404 on access to the resource.
+
+Also, your custom compiler automatically has watch support. If you make any changes to your source file, the
+resource will be automatically compiled.
+  
+### Debug Messages
+
+The middleware prints debugging information into the console. Set `app.debugLog` to true if you want to
+inspect the logs.
+
+
+## body_parser
+
+Parse request bodies and file uploads in POST/PUT requests.
+
+The files uploaded will be stored in your app's `incoming/` directory.
+
+### Configuration Options
+
+- **maxFieldSize** &nbsp; _Max amount of bytes to allow for each field_
+- **maxUploadSize** &nbsp; _Max number of bytes to allow for uploads_
+- **keepUploadExtensions** &nbsp; _If set to true (default) will keep extensions for uploaded files_
+
+### Controller::getRequestData
+
+The middleware exposes a new method for controllers: `getRequestData`, which retrieves POST fields & files, with validation &amp; 
+CSRF protection. If the CSRF token is specified, the request will be validated against it. On failure to validate, an HTTP/400 response will be sent.
+
+The method works similarly as the [getQueryData](/guide#routes_validation-of-route-parameters) method, originally provided by Controller.
+
+The request fields will be validated against the route's validation rules.
+
+### FileManager Class
+
+The middleware provides the _FileManager_, which is used to remove unwanted file uploads. For the available methods, you
+can check out [its source](https://github.com/corejs/corejs/blob/master/middleware/body_parser/file_manager.js).
+
+### Usage
+
+    app.use('body_parser, options);
+
+### Examples:
+
+To receive POST/PUT data in your application, here's how you do it:
+
+    post('/upload', function(req, res) {
+      this.getRequestData(req, function(fields, files) {
+        files.removeAll();
+        res.json(files);
+      });
+    });
+
+On this example, `fields` contains the parsed fields, and files is a _FileManager_ instance, you can use to manipulate your files.
+As can be seen in the code, any uploaded files are removed with `files.removeAll()`. That is, in case you are not expecting any files,
+just fields. This is important from a security perspective.
+
+This module integrates seamlessly with the [CSRF Middleware](#csrf). If you want to add an extra layer of security and validate
+the request by checking the CSRF Token, you pass it as an argument to `getRequestData`:
+
+    post('/upload', function(req, res) {
+      this.getRequestData(req, token, function(fields, files) {
+        files.removeAll();
+        res.json(files);
+      });
+    });
+
+It is important to mention that your `incoming/` directory will stay clean, since the uploaded files of an invalidated request
+due to invalid CSRT Token are automatically removed with `FileManager::removeAll()`.
+
+The amount of files uploaded can be accessed via `files.length`.
+
+To remove any empty files uploaded, use `files.removeEmpty()`.
+
+To iterate over the uploaded files, do:
+
+    files.forEach(function(file) {
+      console.log(file);
+    });
+    
+You can get a specific file object (that is, a File instance provided by formidable):
+
+    var thumb = files.get('thumbnail');
+    console.log(thumb.size);
+    
+There is a more sophisticated method of _FileManager_, called `expect`, which validates the existence of uploaded files. That is, to add an extra
+layer of security and make sure you're receiving the files you are expecting. For more info and documentation on this feature/method,
+refer to [its source](https://github.com/corejs/corejs/blob/master/middleware/body_parser/file_manager.js).
+
+
+## cookie_parser
+
+Parses cookie headers, Integrates with Sessions & Authentication. It adds methods to the _OutgoingMessage_ objects (or better said,
+the _request_ objects).
+
+To see all the cookie manipulation methods, check out [the source](https://github.com/corejs/corejs/tree/master/middleware/cookie_parser).
+
+## csrf
+
+Provides Cross-Site Request Forgery protection for applications.
+ 
+### Configuration Options
+
+- **tokenSuffix** &nbsp; _Suffix to append to csrf tokens_
+- **onFailure** &nbsp; _Error code to respond on token validation failure_
+
+### Usage example
+
+The ideal usage is to create the csrf token before rendering the view,
+this allows the token to be present in logicless templates (e.g. mustachioed
+template engines, such as hogan):
+
+    res.render('form', {
+     myToken: req.csrfToken('protect')
+    });
+ 
+You can also use the csrf middleware directly:
+
+     res.render('form', {
+       myToken: app.csrf.getToken(req, 'protect')
+     });
+ 
+Additionally, you can create the token from inside any template engine
+that supports logic. The following example uses the liquor engine:
+
+    <input type="hidden" name="protect_key" value="#{req.csrfToken('protect')}" />
+
+The middleware integrates nicely with the [Session](#session) and [Body Parser](#body_parser) middlewares.
+
+
+## logger
+
+Application logger. Also provides request logging functionality, supporting custom logging formats.
+
+The logging functions are exposed by the middleware object, and connected to the
+`info_log` and `error_log` events of the application. Error logs are conveniently printed with a stack trace, 
+for proper inspection.
+
+The log events are emitted by `app.log`. If an `Error` instance is passed to it,
+the `error_log` event is automatically emitted with the error in question.
+
+The middleware provides the following transports:
+
+- [MongoDB](https://github.com/corejs/corejs/blob/master/middleware/logger/transport-mongodb.js)
+- [Redis](https://github.com/corejs/corejs/blob/master/middleware/logger/transport-redis.js)
+- [File](https://github.com/corejs/corejs/blob/master/middleware/logger/transport-file.js)
+- [Console](https://github.com/corejs/corejs/blob/master/middleware/logger/transport-console.js)
+
+### Configuration Options
+
+- **accessLog** &nbsp; _If set to true (default), will save requests to the access.log file_
+- **accessLogConsole** &nbsp; _If set to true (default), will log requests to the console_
+- **accessLogFormat** &nbsp; _Function to use to format the logs_
+
+### Log Levels
+
+To set a log level, you specify the log level alias, ending with 'Level', for example:
+
+    app.use('logger', {
+      noticeLevel: {
+        console: true,
+        file: 'notice.log'
+      },
+      my_coolLevel: {
+        console: true
+      },
+      criticalLevel: {
+        file: 'critical.log',
+        console: true,
+        mongodb: true
+      }
+    });
+
+Each level adds its own methods you can use to log messages. For example, the levels set on the example
+code above, will set the following methods in the app singleton:
+
+    app.noticeLog(log);
+    app.myCoolLog(log);
+    app.criticalLog(log);
+  
+Each method accepts printf-like arguments. Additionally, the middleware sets events for the levels you
+specify in the config. For example, the following events will be set with the config used above:
+
+    notice_log
+    my_cool_log
+    critical_log
+  
+You can hook your own functions to manage the logs sent to each level.
+  
+### Log Locations
+
+      Info log:   log/info.log
+     Error log:   log/error.log
+    Access log:   log/access.log
+  
+By default, the path is relative to the application's log/ directory. You can also specify absolute paths for
+logs using the file transport.
+
+
+## response_cache
+
+Caches views into a specific storage backend.
+
+### Configuration Options
+
+- **storage** &nbsp; Resource string pointing to the storage backend to use, or Storage instance.
+
+### Examples
+
+    app.use('response_cache', {
+      storage: 'redis'
+    });
+  
+In this example, the 'redis' resource string points to the storage configuration
+specified in `config/storage.js`.
+  
+### Usage example
+
+    res.useCache('faq_cache');
+    res.render('faq');
+    
+### Invalidating Caches
+
+Caches are automatically flushed every time you start the application. This ensures you have the latest version of the
+cache, just in case the view contents have changed.
+
+The middleware attaches itself into `app.response_cache`. This object will later on contain all the caches you set in the
+views when using `res.useCache(cacheID)`.
+
+Once a cache is stored, its ID is added to the `app.response_cache` object. This will prevent the cache from being regenerated. You can use
+this option  conveniently to purge caches, just by deleting its respective key.
+
+
+## session
+
+Provides complete session management for applications.
+  
+### Configuration Options
+
+- **guestSessions** &nbsp; _If set to true, will enable sessions for guest users_
+- **regenInterval** &nbsp; _Interval to regenerate the sessionId (seconds)_
+- **permanentExpires** &nbsp; _Permanent sessions timeout (seconds)_
+- **temporaryExpires** &nbsp; _Temporary (browser) sessions timeout (seconds)_
+- **guestExpires** &nbsp; _Guest sessions timeout (seconds)_
+- **typecastVars** &nbsp; _Session properties to automatically typecast when loading session data_
+- **sessCookie** &nbsp; _Default session cookie name_
+- **hashCookie** &nbsp; _Default session hash name_
+- **defaultUserAgent** &nbsp; _Default user agent when not set_
+- **salt** &nbsp; _Salt used to generate session hashes_
+- **storage** &nbsp; _Resource Path pointing to the Storage to use_
+
+
+### Session Conventions
+
+CoreJS can automatically detect if a user is logged in or not, depending on the values stored in the session. 
+
+  > If the `user` property is present in the session data, the user is assumed to be logged in
+
+When creating guest sessions, the session data will automatically set its default to `{guest: 1}`. This means the session
+belongs to a guest user.
+
+### Controller Authentication
+
+When the Session middleware is enabled, the controllers start interpreting the `authRequired` property.
+
+The `authRequired` property acts as the _first layer_ of the Controller Filters. This means, any controller filters you have 
+set, won't be executed if the user is not logged in. That is, as long as `authRequired` is set to true.
+
+Even if sessions are enabled, if `authRequred` is set to false, it won't have any effect on the controller, and any controller
+filters will work normally.
+
+### Creating Sessions
+
+To create a session, you do the following:
+
+    // Determines if session will be persistent
+    var pers = true;
+
+    app.session.create(req, res, {user: "ernie"}, pers, function(session, hashes, expires) {
+      res.json([session, hashes, expires]);
+    });
+    
+Simple as that. You specify both _request_ and _response_ objects. That is in case the user has tampered the session cookies
+in some way, or the session data is invalid. This allows the session middleware to use the request and response objects to
+automatically set and remove cookies, as well as redirect the users.
+
+The session can be either _persistent_ or temporary, depending on the boolean value you specify. The persistent value is
+specified after the _session data_.
+
+Remember, to log in a user make sure you set his/her username on the session data.
+
+### Creating Guest Sessions
+
+To create a guest session:
+
+    app.session.createGuestSession(req, res, function(session, hashes, expires) {
+      res.json([session, hashes, expires]);
+    });
+
+If you want to create a guest session with initial data, here's how you do it:
+
+    app.session.createGuestSession(req, res, {visits: 0, banned: false}, function(session, hashes, expires) {
+      res.json([session, hashes, expires]);
+    });
+    
+It uses `app.session.create` behind the scenes to create the session. As said before, it automatically adds the `guest` property
+to the data set to 1.
+
+
+## static_server
+
+Fully featured static server for applications, supporting Partial Content requests and Conditional GET.
+
+The middleware reads static content from your application's `public/` directory.
+
+### Configuration options
+
+- **eTags** &nbsp; _If set to true, will include the default eTag header. If you specify a function as the value, it will be used to generate the eTag header_
+- **acceptRanges** &nbsp; _If set to true (default), responds to partial content requests_
+
+### Forcing File Download
+
+The Middleware extends the _request_ objects and adds a `download` method, which allows you to force the download of a file.
+Here's how you use this feature:
+
+    res.download(app.fullPath('/robots.txt'), 'robots.txt');
+
+
+## aws
+
+Amazon Web Services middleware. Provides clients to all of Amazon's web services (ES3, EC2, etc).
+
+### References:
+
+- https://github.com/SaltwaterC/aws2js<br/>
+- https://github.com/SaltwaterC/aws2js/wiki/S3-Client<br/>
+- https://github.com/SaltwaterC/aws2js/wiki/EC2-Client
+  
+### Configuration Options
+
+- **accessKey** &nbsp; _AWS access key_
+- **secretKey** &nbsp; _AWS secret key_
+- **clients** &nbsp; _Object containing the clients to configure_
+  
+### Example:
+
+    app.use('aws', {
+      accessKey: 'username',
+      secretKey: 'password',
+      clients: {
+        thumbs: {
+          type: 's3',
+          setBucket: 'my.cool.bucket',
+        },
+        cloud: {
+          type: 'ec2',
+          setRegion: 'ap-southeast-1'
+        }
+      }
+    });
+  
+### Client Configuration
+  
+In the example above, each client configuration receives a 'type' property, which
+is the AWS Client to use. For more info on the supported clients, refer to the
+aws2js module documentation (link in References section).
+
+The rest of the properties of each client configuration are the specific methods
+supported by the client in question. In the example above (on the s3 client, thumbs)
+the 'setBucket' option is set to 'my.cool.bucket'.
+
+This is the same as manually running `s3.setBucket('my.cool.bucket')` after loading 
+the aws client. In other words, the methods and arguments for the aws client are exposed
+as properties. If the argument is passed as an array, then `Function.prototype.apply` will
+be used to pass the arguments to the aws client.
+
+Upon instantiation, each defined client will be available in `app.aws.{client}`. The clients
+are instances of aws2js clients. For more info, consult the References section above.
+
+
+## bcrypt
+
+Provides Blowfish encryption capabilities for the application.
+
+### References:
+
+- https://github.com/ncb000gt/node.bcrypt.js<br/>
+- http://codahale.com/how-to-safely-store-a-password/
+  
+### Configuration Options
+
+- **rounds** &nbsp; _Number of rounds to process the data for_
+- **seedLength** &nbsp; _Seed length to pass to rand bytes_
+
+### Examples
+
+Password hashing and comparison occurs asynchronously. Here's how you hash a password:
+
+    app.bcrypt.hashPassword(pass, function(err, hash) {
+      console.exit(err || hash);
+    });
+    
+And here's how you check a hashed password:
+
+    app.bcrypt.checkPassword(password, hash, function(err, valid) {
+      promise.emit('success', [hash, valid]);
+    });
+
+
+## mailer
+
+Provides mail functionality to the application, with full unicode support.
+
+Transports available are SMTP, Amazon SES (Simple Email Service) and sendmail.
+
+### References
+
+- http://www.nodemailer.org/
+
+### SMTP Example
+
+    app.use('mailer', {
+      SMTP: {
+        host: 'smtp.example.com',     // required
+        port: 25,                     // optional, defaults to 25 or 465
+        use_authentication: false,    // optional, false by default
+        user: '',                     // used only when use_authentication is true 
+        pass: ''                      // used only when use_authentication is true
+      }
+    });
+
+### Amazon SES Example
+
+    app.use('mailer', {
+      SES: {
+        AWSAccessKeyID: 'ACCESSKEY',  // required
+        AWSSecretKey: 'SECRETKEY',    // required
+        ServiceUrl: 'https://email.us-east-1.amazonaws.com', // optional
+      }
+    });
+
+### Sendmail Example (default)
+
+    app.use('mailer', {
+      sendmail: true
+    });
+
+    app.use('mailer', {
+      sendmail: '/path/to/sendmail'
+    });
+    
+    
+## markdown
+
+Provides markdown support for applications & views.
+
+The concept of "flag aliases" is introduced, as a mechanism to store a group
+of discount flags for specific types of content. This allows fine grained parsing
+of markdown syntax where different requirements are needed.
+
+The markdown syntax is automatically sanitized, if the flag alias specified has been
+configured to be sanitized. In other words, if it's present in the `sanitize` 
+configuration array.
+
+### References
+
+- http://www.pell.portland.or.us/~orc/Code/discount/
+- https://github.com/visionmedia/node-discount
+- https://github.com/theSmaw/Caja-HTML-Sanitizer
+- http://code.google.com/p/google-caja/source/browse/trunk/src/com/google/caja/plugin/html-sanitizer.js
+
+### Configuration Options
+
+- **flags** &nbsp; _containing flag aliases to set_
+- **sanitize** &nbsp; _containing the flag aliases to sanitize_
+
+### View Helpers
+
+- **$markdown** &nbsp; _Parses a markdown string. Alias of `Markdown::parse`_
+
+### Example
+
+    app.use('markdown', {
+      flags: {
+        content: ['noImage', 'noPants', 'autolink'],
+        comment: ['noHTML', 'noTables', 'strict']
+      },
+      sanitize: ['default', 'comments']
+    });
+
+### Usage example (liquor rendering engine):
+
+    #{$markdown('## This is a **heading** level 2')}
+
+    #{$markdown('This is comment text', 'comment')}
+
+
+
+## production_url
+
+Removes the port suffix from the application's url. 
+
+This is useful if the application is running under a proxy, 
+or if there are kernel level redirection rules (iptables).
+
+
+
+## redirect
+
+Redirect all application requests to a specific URL. 
+
+An HTTP/400 Response will be sent on requests other than GET/HEAD.
+
+### Example
+
+    app.use('redirect', 'http://google.com');
+
+
+
+## shortcode
+
+Allows applications to filter content using shortcodes.
+
+The reason behind this, is to overcome JavaScript's limitation to
+parse multiline strings.
+
+You can define shortcodes using any template engine. You bind functions
+to the shortcode labels to modify the content wrapped within such
+shortcode. Spaces and line feeds are preserved.
+
+Shortcodes keep your view code clean, by delegating string processing
+operations to separate functions, not related to the view.
+
+### TODO
+
+The following things might be useful, but I don't have the time to
+implement these features right now. In case you want to help out:
+
+- Ability to pass arguments to shortcodes
+
+### Use Cases:
+
+- Parse markdown strings within your views (specially for **huge** chunks of markdown code, [like this](/guide))
+- Content Sanitization & Escaping, to protect against XSS Attacks
+- Include cached content into your views
+
+### Example:
+
+    var buffer = "Lorem [uppercase]ipsum[/uppercase] dolor sit [base64]AMET[/base64] et sempis";
+
+    buffer = app.shortcode.replace(buffer, {
+      uppercase: function(str) {
+        return str.toUpperCase();
+      }, 
+      base64: function(str) {
+        return new Buffer(str).toString('base64');
+      }
+    });
+
+    console.exit(buffer); // returns: "Lorem IPSUM dolor sit QU1FVA== et sempis"
+
+
+## socket_io
+
+Provides socket.io support for applications. The middleware acts as an automatic
+and convenient configuration of socket.io, supporting namespaces.
+
+### References
+
+- https://github.com/learnboost/socket.io
+- https://github.com/LearnBoost/socket.io-spec
+- https://github.com/LearnBoost/Socket.IO/wiki/Configuring-Socket.IO
+
+### Provides
+
+- **app.io** &nbsp; _SocketIO server, listening on the application's port_
+- **app.sockets** &nbsp; _Contains all the SocketIO namespaces, ready to use & configured_
+
+### Configuration options
+
+- **settings** &nbsp; _Settings to pass to the socket on initialization_
+- **sockets** &nbsp; _Contains socket namespaces as {name: endpoint}_
+- **environments** &nbsp; _Object containing callbacks that will run on each application environment_
+
+### Example
+
+    app.use('socket_io', {
+      settings: {
+        log: true,
+        heartbeats: true,
+        'log level': 1
+      },
+      sockets: {
+        chat: '/chat',
+        news: '/news'
+      },
+      environments: {
+        development: function(io) {
+          // Code to run on development
+        },
+        production: function(io) {
+          // Code to run on production
+        }
+      }
+    });
+
+[/markdown]
