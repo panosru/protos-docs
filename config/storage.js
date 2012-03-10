@@ -7,7 +7,7 @@ module.exports = {
     response_cache: {
       host: 'localhost',
       port: 6379,
-      db: 0
+      db: 1
     }
   }
 
