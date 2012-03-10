@@ -3,21 +3,32 @@
 
 (function($) {
   
-var wdata, cw, tw, hh, wlimit, toc = ['<ul>'];
+var wdata, cw, tw, hh, wlimit;
+
+var toc = ['<ul>'],
+    allowed = ['guide', 'middleware'];
   
 $(document).ready(function() {
   initClosureVars();
-  beautifyLists();
-  addLinkIDs();
-  $w.resize(adjustLayout);
-  $w.scroll(scrollEvent);
+
+  if (allowed.indexOf($body.attr('id')) >= 0) {
+    beautifyLists();
+    addLinkIDs();
+    $w.resize(adjustLayout);
+    $w.scroll(scrollEvent);
+  } else {
+    $toc.remove();
+    $expander.remove();
+  }
+  
 });
 
-var $w, $content, $toc, $top, $expander;
+var $body, $w, $content, $toc, $top, $expander;
 
 function initClosureVars() {
   $expander = $('span#expander');
   $content = $('#content');
+  $body = $('body');
   $toc = $('#toc-sidebar');
   $toc.width(tw=300);
   $top = $('#top-btn');

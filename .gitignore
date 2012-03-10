@@ -3,3 +3,4 @@
 /node_modules
 /log/*.log
 /public/css/main.css
+/public/css/print.css
