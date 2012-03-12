@@ -1,8 +1,10 @@
 {
-  "name"              : "skeleton",
-  "description"       : "CoreJS Application Skeleton",
-  "version"           : "0.0.0",
+  "name"              : "corejs-org",
+  "description"       : "Application running http://corejs.org",
+  "version"           : "0.0.1",
   "main"              : "boot.js",
   "engines"           : { "node": ">= 0.6.0" },
-  "dependencies"      : { }
+  "dependencies"      : { 
+    "corejs"          : ">= 0.0.7"
+  }
 }
