@@ -73,8 +73,19 @@ CoreJS.bootstrap(__dirname, {
       // Static file server
       app.use('static_server');
       
-      // Asset compiler, for LESS
-      app.use('asset_compiler');
+      // Asset compiler
+      if (app.environment === 'production') {
+        // Serve minified assets on production
+        app.use('asset_compiler', {
+          minify: {
+            'css/client.min.css': ['css/blueprint.css', 'css/print.less', 'css/main.less'],
+            'js/client.min.js': 'js/client.js'
+          }
+        });
+      } else {
+        // Compile & Watch on development/debug
+        app.use('asset_compiler');
+      }
       
       // Optimize performance by caching responses in storage
       app.use('response_cache', {

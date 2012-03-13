@@ -2,14 +2,16 @@
 <html lang="#{app.config.language}" id="top">
 <head>
 <title>#{app.config.title}</title>
-<meta charset="#{app.config.encoding}" />
-<link rel="stylesheet" type="text/css" href="/css/main.css" />`
+<meta charset="#{app.config.encoding}" />`
 
 if (app.environment === 'production') {`
-<link rel="stylesheet" type="text/css" href="/css/main.css" href="http://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic,700italic" />
-`}
-
-`</head>
+<link rel="stylesheet" type="text/css" href="/css/client.min.css" />
+<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic,700italic" />
+`} else {`
+<link rel="stylesheet" type="text/css" href="/css/blueprint.css" />
+<link rel="stylesheet" type="text/css" href="/css/print.css" />
+<link rel="stylesheet" type="text/css" href="/css/main.css" />
+`}`</head>
 <body#{$page_id(locals)}>
   
 <div id="header" class="fw">

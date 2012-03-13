@@ -9,11 +9,10 @@
   </div><!-- .wrap -->
 </div><!-- footer -->
 
-<script type="text/javascript" src="/js/jquery-1.7.1.min.js"></script>
-<script type="text/javascript" src="/js/client.js"></script>
-`
+<script type="text/javascript" src="/js/jquery-1.7.1.min.js"></script>`
 
 if (app.environment == 'production') {`
+<script type="text/javascript" src="/js/client.min.js"></script>
 <script type="text/javascript">
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', 'UA-29863912-1']);
@@ -24,9 +23,8 @@ if (app.environment == 'production') {`
     ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
   })();
-</script>
-`}
-
-`
+</script>`} else {`
+<script type="text/javascript" src="/js/client.js"></script>`
+}`
 </body>
 </html>
