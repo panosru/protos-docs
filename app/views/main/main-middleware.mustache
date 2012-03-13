@@ -11,19 +11,15 @@ Provides the application with asset compilation features.
 - http://coffeescript.org/
 - http://learnboost.github.com/stylus/
   
-### TODO
-
-- Implement a compressor/minifier
-- Ability to merge several compiled/minified files into a single file to serve in production
-  
 ### Configuration options
 
+- **minify** &nbsp; _Assets to be minified. {target: [sources]}_
 - **watchOn** &nbsp; _Array containing environments in which the assets will be automatically compiled on change_
 - **compile** &nbsp; _Extensions to compile and/or watch._
 - **compileExts** &nbsp; _Object containing the target extensions of compiled assets. Contains {ext: outExt}_
 - **compilers** &nbsp; _Object containing the functions that compile the target extensions._
-- **assetSourceAccess** &nbsp; _If set to true, will enable access to the asset sources (disabled by default)_
-  
+- **uglifyOpts** &nbsp; _UglifyJS options_
+
 If the `compile` array is found in the middleware configuration object, then the default assets (such as
 less, coffee & stylus) will be disabled and replaced with your own extensions. This allow to only watch
 for .coffee files, for example.
@@ -45,12 +41,35 @@ will automatically respond with HTTP/404 on access to the resource.
 
 Also, your custom compiler automatically has watch support. If you make any changes to your source file, the
 resource will be automatically compiled.
-  
+
+### Asset Minification &amp; Compression
+
+You can compile several assets into multiple JavaScript or CSS Files, as such:
+
+    app.use('asset_compiler', {
+      minify: {
+        'client.min.css': ['css/blueprint.css', 'print.less', 'layout.less', 'sidebar.styl'],
+        'client.min.js': ['js/client.js', 'js/responsive.coffee', 'js/events.coffee'],
+        'compat.min.js': 'js/compat.js'
+      }
+    });
+    
+The paths you specify, are relative to your application's public/ directory. The example above will output two files into your
+application's public/ directory:
+
+    /public/client.min.css
+    /public/client.min.js
+    /public/compat.min.js
+    
+The target compilation assets (the ones being merged & minified) won't be served by the Static File Server, and an HTTP/404
+response will be sent upon access to such resources.
+
+This means that nobody will be able to access _print.less_, _js/client.js_ or any of the files that are being merged. These 
+files are automatically blocked, since their content is accessed via their minified/compiled counterparts.
+
 ### Debug Messages
 
-The middleware prints debugging information into the console. Set `app.debugLog` to true if you want to
-inspect the logs.
-
+Set `app.debugLog` to true if you want to inspect the logs emitted by this middleware.
 
 ## body_parser
 

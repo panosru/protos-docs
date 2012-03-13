@@ -97,7 +97,7 @@ function addLinkIDs() {
       elem.attr('id', prefix);
       toc.push('<li class="section"><a href="#'+ prefix +'">'+ text +'</a></li>');
     } else if (elem.is('h3')) {
-      id = prefix + lowerDash(text);
+      id = prefix + '_' + lowerDash(text);
       elem.attr('id', id);
       toc.push('<li class="sub"><a href="#'+ id +'">'+ text +'</a></li>');
     }

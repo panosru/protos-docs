@@ -41,8 +41,9 @@ For a full list of options and commands, run `corejs --help`.
 
 ## Creating Application Resources
 
-The corejs command also allows you to create Controllers, Helpers, Models, Views and Partials. You _must_ be within your 
-application's path to be able to generate new components.
+The corejs command also allows you to create [Controllers](#applicaton-controllers), [Helpers](#application-views_view-helpers), 
+[Models](#application-models-api), [Views](#application-views) and [Partials](#view-partials).
+You _must_ be within your application's path to be able to generate new components.
 
 ### Creating Controllers
 
@@ -117,6 +118,20 @@ Here's the output of the command above:
     » Created myapp/app/views/admin/_sidebar.html
     
 As with views, you can also specify the `--ext` option to create your partials using custom extensions.
+
+### Creating Static Views
+
+Static Views are created with the `corejs static` command:
+
+    $ corejs static about contact portfolio
+    
+Here's the output of the command above:
+
+    » Created myapp/app/views/__static/about.html
+    » Created myapp/app/views/__static/contact.html
+    » Created myapp/app/views/__static/portfolio.html
+    
+As with views, you can also specify the `--ext` option to create static views using custom extensions.
 
 ## Running the Application's Server
 
@@ -204,6 +219,23 @@ For example: create a **cluster.json** file with the following contents:
 These settings are analogous to the command line example. This method is very convenient, since it allows you
 to keep the deployment configuration in a single JSON file.
 
+## Running the Node Inspector
+
+You can easily debug your applications using the built-in [node-inspector](https://github.com/dannycoates/node-inspector). This means
+you can use the regular Webkit Inspector to debug your Node.js/CoreJS applications. Cool!
+
+  > Starting your application in the debug environment will automatically launch the Node Debugger. This means you can jump
+  > right into the inspector as soon as you start your application.
+  
+To start the inspector:
+
+    corejs inspector start
+    
+To stop the inspector:
+
+    corejs inspector stop
+    
+Node inspector listens by default on http://localhost:3000
 
 ## Application Structure
 
@@ -219,14 +251,14 @@ The following tree contains the skeletal application structure, just after runni
     │   │   └── users.js
     │   └── views
     │       ├── __layout
-    │       │   ├── footer.mustache
-    │       │   └── header.mustache
+    │       │   ├── footer.html
+    │       │   └── header.html
     │       ├── __restricted
-    │       │   ├── 404.mustache
-    │       │   ├── 500.mustache
-    │       │   └── msg.mustache
+    │       │   ├── 404.html
+    │       │   ├── 500.html
+    │       │   └── msg.html
     │       ├── __static
-    │       │   └── static.mustache
+    │       │   └── readme.md
     │       └── main
     │           └── main-index.html
     ├── app.js
@@ -258,12 +290,12 @@ The following tree contains the skeletal application structure, just after runni
 
 ### app.js
 
-This is the ideal place to store your extensions to the Application constructor's prototype. This file is optional.
+This is the ideal place to store your extensions to the Application constructor's [prototype](https://github.com/corejs/corejs/blob/master/lib/application.js). This file is optional.
 
 ### boot.js
 
-This is the Application's **bootstrap** file. It is used to specify your application's configuration, such as hostname,
-port, number of node processes to use, etc.
+This is the Application's [bootstrap](#the-applications-bootstrap-file-bootjs) file. It is used to specify your 
+application's configuration, such as hostname, port, number of node processes to use, etc.
 
 The bootstrap file is very flexible, since it also allows you to run code on each environment. Useful if you want to 
 load different middleware configurations on each environment.
@@ -310,18 +342,23 @@ This is where all of the application's configuration files and environment scrip
 
 You can find more information on the [Application Configuration](#application-configuration) section.
 
+### config/env/
+
+Files matching the current environment will be looked up here. For example: _development.js_, _production.js_, etc. The code
+in these scripts will run **before** the environment functions in the [bootstrap](#the-applications-bootstrap-file-bootjs) file.
+
 ### incoming/
 
-This is where the application uploads will live. Everythign you upload will end up here by default.
+Directory to hold File Uploads. This is the upload location for the [Body Parser Middleware](/middleware#body_parser).
 
 ### log/
 
-Location where the application's log files reside.
+Directory that holds the Application's log files. This is the storage location for the [Logger Middleware](/middleware#logger).
 
 ### middleware/
 
 Directory that holds the application-specific middleware. Any middleware specified here will override the framework's
-middleware as long as it has the same name.
+middleware as long as it has the same name. This directory is optional.
 
 ### public/
 
@@ -334,7 +371,6 @@ Application-specific scripts
 ### test/
 
 Directory to store your application's test suites
-
 
 ## Application Configuration
 
@@ -356,6 +392,9 @@ the database config in `app.config.database`, the regex config in `app.config.re
 
 If you add a new configuration file in the config/ directory, let's say: _users.js_, then you can access this configuration
 in the `app.config.users` object.
+
+You can also remove any of the configuration files, as long as you add an extra property into the _base.js_ file. For example,
+if you remove the _database.js_ file, make sure you add a `database` key inside the base configuration object in _base.js_.
 
 This convention is really flexible if you want to separate your configuration by keeping it in logical sections & files. It
 enforces greater application maintainability.
@@ -626,10 +665,12 @@ This convention helps you develop RESTful Applications or APIs with ease.
 
 The route functions can receive various types of arguments:
 
-- route, callback
-- route, validation, callback
-- route, validation, messages, callback
-- route, validation, messages, callback, *methods
+    get( {route}, {validation?}, {messages?}, {callback*}, {method*} );
+
+The _validation_ and _messages_ parameters are optional. To specify _messages_, you need to specify _validation_.
+
+You can specify as many callbacks as you want, and these will run in chain, asynchronously. Also, you can specify an array
+of callbacks (which will end up flattened).
 
 The callbacks assigned to a specific route, are usually referred to as _Route Callbacks_, not to be confused with the
 _Route Functions_ (or _Route Methods_).
@@ -646,6 +687,30 @@ A simple route is the one that only has _(route, callback)_, such as:
     
 This route will cover the `/{namespace}/hello` route, and if it's global, it will then be mapped to `/hello`. The callback
 specified will run **if and only if** the route and authentication (more on this later) are matched.
+
+### Routes with Multiple Callbacks
+
+You can run multiple callbacks as such:
+
+    get('/resource', incrCounter, authUser, prepareData, renderView);
+    
+In this case, the functions _incrCounter_, _authUser_, _prepareData_ and _renderView_ will run in order. Each one of these
+functions receive the exact same parameters of a Route Function.
+
+To pass control to the next _Route Function_ in the chain, you can call `req.next()`:
+
+    function authUser(req, res, params) {
+      // ... do something ...
+      req.next();
+    }
+    
+Otherwise you can let the function take over and decide what to do with the response, in any position of the chain:
+
+    function prepareData(rqe, res, params) {
+      // ... get valid ...
+      if (valid) req.next();
+      else app.serverError(res, new Error("Invalid Data"));
+    }
 
 ### Regular Expressions
 
@@ -898,6 +963,8 @@ able to access the routes, and will be responded with a `403 Forbidden` message.
 In this case, we're using `req.queryData.pass` to get the `pass` query parameter, we're not doing any validation on it, just 
 getting it right as it was received. If you need validation, then `this.getQueryData` should be used.
 
+The Authentication Filters run before any Route Functions are executed. Have this in mind when designing your Applications.
+
 ### Implementation Details
 
 There are a few important things to know about Controller Filters to be able to use them at full potential:
@@ -1007,7 +1074,51 @@ If you're using any of these Template Engines, then the templates won't be _Mult
 do the templating and inclusion of header/footer and other parts from within the view itself. You can still use view
 partials normally.
     
-### View Partials
+### View Extensions
+
+The following table shows the view extensions for each Template Engine:
+
+| Template Engine |  Engine Alias | View Extensions |
+|-----------------|------------------|
+| CoffeeKup | coffeekup | coffeekup, ck.html
+| DoT | dot | dot, dot.html
+| Eco | eco | eco, eco.html
+| EJS | ejs | ejs, ejs.html
+| Haml | haml | haml, haml.html
+| Haml-Coffee | hamlcoffee | hamlc, haml.coffee, hamlc.html
+| Handlebars | handlebars | handlebars, handlebars.html, hb.html
+| Hogan.js | hogan | hogan, hogan.html, hg.html
+| Jade | jade | jade, jade.html
+| Jazz | jazz | jazz, jazz.html
+| jQuery Templates | jqtpl | jqtpl, jqtpl.html, jq.html
+| JSHtml | jshtml | jshtml
+| Kernel | kernel | kernel, kernel.html, k.html, khtml
+| Liquor | liquor | liquor, liquor.html, lq.html
+| Swig | swig | swig, swig.html, sw.html
+| Whiskers | whiskers | whiskers, whiskers.html, wk.html
+
+  > You can edit and set new extensions by editing your Application's **config/base.js**, under the _engines_ section. Each
+  > property you set will refer to the engine extension, and the value is the _Engine Alias_.
+
+
+### Static Views
+
+You can create routes in your application without actually creating them in Controllers. You can also place a file in the 
+*app/views/__static* directory.
+
+Let's say your application should handle the following URLs, which mostly contain static content:
+
+    http://myapp.com/portfolio
+    http://myapp.com/about
+
+If you want to keep your routes clean, you don't need to add a simple route to handle these. Just create the following files:
+
+    app/views/__static/portfolio.html
+    app/views/__static/about.html
+    
+Each time you access the URLs above, these templates will be used.
+
+## View Partials
 
 View Partials are one of the beauties of CoreJS. You can mix &amp; match any view engine. Your application doesn't actually
 care which template engine you use, you can still use partials.
@@ -1029,6 +1140,8 @@ To learn to create view partials, refer to the [Creating View Partials](#creatin
   > The View Partials are exposed as local functions within your views. Most views allow running regular JavaScript functions and
   > receiving parameters passed as their _locals_. CoreJS uses this common approach and exploits its full potential.
 
+### Exposed Functions
+
 The table below shows the location and the explosed function name. Paths are relative to _app/views_.
 
 | View Partial File | Exposed View Function |
@@ -1045,7 +1158,7 @@ partial into the view:
       #{blog_post_comment(locals.comments)}
     </div><!-- .post-comment -->
 
-### View Helpers
+## View Helpers
 
 View helpers are also functions that are exposed into the views. They are similar in functionality to view partials, but
 they end up in the views in a slightly different way.
@@ -1096,50 +1209,17 @@ The following are important things to know about View Helpers:
 - The methods exposed by _MainHelper_ are not prefixed
 - The methods exposed by the other helpers are prefixed with the _helper alias_
 
+### Default View Helpers
 
-### View Extensions
+The framework provides a default set of helpers you can use:
 
-The following table shows the view extensions for each Template Engine:
+- **$stylesheet**: _Inserts a &lt;link&gt; to a stylesheet into the view_
+- **$script**: _Inserts a &lt;script&gt; element into the view_
+- **$link**: _Inserts an &lt;a&gt; anchor into the view_
+- **$sanitize**: _Sanitizes input_
+- **$escape**: _Escapes input_
+- **$safe_str_**: _Sanitizes &amp; Escapes input_
 
-| Template Engine |  Engine Alias | View Extensions |
-|-----------------|------------------|
-| CoffeeKup | coffeekup | coffeekup, ck.html
-| DoT | dot | dot, dot.html
-| Eco | eco | eco, eco.html
-| EJS | ejs | ejs, ejs.html
-| Haml | haml | haml, haml.html
-| Haml-Coffee | hamlcoffee | hamlc, haml.coffee, hamlc.html
-| Handlebars | handlebars | handlebars, handlebars.html, hb.html
-| Hogan.js | hogan | hogan, hogan.html, hg.html
-| Jade | jade | jade, jade.html
-| Jazz | jazz | jazz, jazz.html
-| jQuery Templates | jqtpl | jqtpl, jqtpl.html, jq.html
-| JSHtml | jshtml | jshtml
-| Kernel | kernel | kernel, kernel.html, k.html, khtml
-| Liquor | liquor | liquor, liquor.html, lq.html
-| Swig | swig | swig, swig.html, sw.html
-| Whiskers | whiskers | whiskers, whiskers.html, wk.html
-
-  > You can edit and set new extensions by editing your Application's **config/base.js**, under the _engines_ section. Each
-  > property you set will refer to the engine extension, and the value is the _Engine Alias_.
-
-
-### Static Views
-
-You can create routes in your application without actually creating them in Controllers. You can also place a file in the 
-*app/views/__static* directory.
-
-Let's say your application should handle the following URLs, which mostly contain static content:
-
-    http://myapp.com/portfolio
-    http://myapp.com/about
-
-If you want to keep your routes clean, you don't need to add a simple route to handle these. Just create the following files:
-
-    app/views/__static/portfolio.html
-    app/views/__static/about.html
-    
-Each time you access the URLs above, these templates will be used.
 
 ## Application Models &amp; API
 
@@ -1587,5 +1667,19 @@ CoreJS provides the following Storages:
 - [Redis](https://github.com/corejs/corejs/blob/master/storages/redis.js)
 
 For more information about the Storage API, you can check out [its source](https://github.com/corejs/corejs/blob/master/lib/storage.js).
+
+## Application &amp; Framework Methods
+
+CoreJS provides several methods in the Application Singleton that you can use right away in your applications. You can start 
+using these with your applications. Full documentation can be found in the source code.
+
+### Application API
+
+For a list of the methods implemented in the application singleton, refer to the 
+[application.js](https://github.com/corejs/corejs/blob/master/lib/application.js) source. 
+
+### CoreJS API
+
+To see the available methods provided by the framework's internals, refer to the sources in [lib/](https://github.com/corejs/corejs/tree/master/lib)
 
 [/markdown]
