@@ -1,5 +1,5 @@
 
-var sanitizer = corejs.require('sanitizer');
+var sanitizer = protos.require('sanitizer');
 
 function Initialize(app) {
   

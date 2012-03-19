@@ -3,7 +3,7 @@
 
 module.exports = {
   
-  title: 'CoreJS &mdash; Web Application Framework',
+  title: 'Protos &mdash; Web Application Framework',
   language: 'en-US',
   encoding: 'utf-8',
   rawViews: false,
@@ -12,7 +12,7 @@ module.exports = {
     'Content-Type': function(req, res) { return "text/html; charset=" + this.config.encoding; },
     'Date': function() { return new Date().toUTCString(); },
     'Status': function(req, res) {  return res.statusCode + " " + this.httpStatusCodes[res.statusCode]; },
-    'X-Powered-By': 'corejs'
+    'X-Powered-By': 'protos'
   },
   
   server: {

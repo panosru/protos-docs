@@ -1,7 +1,7 @@
 
 [markdown]
 
-CoreJS is an open source Web Application Development framework, focused on high performance, integration, ease of 
+Protos is an open source Web Application Development framework, focused on high performance, integration, ease of
 deployment, maintainability and security.
 
 It aims to integrate several open source packages and combine their power &amp; functionality, to bring a common set of
@@ -34,7 +34,7 @@ utilities and functionality to all applications, reducing their dependencies.
 
 ## Development Stack
 
-CoreJS provides a set of APIs that allow the framework to be extended in all sorts of ways. Use it either to contribute
+Protos provides a set of APIs that allow the framework to be extended in all sorts of ways. Use it either to contribute
 new functionality &amp; components to it, or to enhance it with the needs of your team/organization.
 
 ### Drivers
@@ -44,7 +44,7 @@ implementing the _Models API_, which allows the Driver to connect with _Models_.
 
 ### Storages
 
-_Storages_ are used for caching, session data and anything you can think of. These abstract databases with fast read/write 
+_Storages_ are used for caching, session data and anything you can think of. These abstract databases with fast read/write
 operations, such as MongoDB and Redis. Storages are also used as the _caching layer_ for Drivers on the _Query Cache_ functionality.
 
 ### Models
@@ -65,17 +65,17 @@ means you can use a database backend for development, and another for production
 
 Here's the Development Stack the framework provides, in a nutshell:
 
-- **Drivers** &nbsp; _[MongoDB](https://github.com/corejs/corejs/blob/master/drivers/mongodb.js), [MySQL](https://github.com/corejs/corejs/blob/master/drivers/mysql.js)_
-- **Storages** &nbsp; _[MongoDB](https://github.com/corejs/corejs/blob/master/storages/mongodb.js), [Redis](https://github.com/corejs/corejs/blob/master/storages/redis.js)_
+- **Drivers** &nbsp; _[MongoDB](https://github.com/derdesign/protos/blob/master/drivers/mongodb.js), [MySQL](https://github.com/derdesign/protos/blob/master/drivers/mysql.js)_
+- **Storages** &nbsp; _[MongoDB](https://github.com/derdesign/protos/blob/master/storages/mongodb.js), [Redis](https://github.com/derdesign/protos/blob/master/storages/redis.js)_
 - **Models** &nbsp; _Use any Driver supported_
 - **Query Cache (Drivers)** &nbsp; _Use any Storage supported_
 - **Query Cache (Models)** &nbsp; _Handled by underlying Driver_
 - **Caching** &nbsp; _Use any Storage supported_
 - **Sessions** &nbsp; _Use any Storage supported_
 - **Response Caching** &nbsp; _Use any Storage supported_
-- **Logging** &nbsp; _[MongoDB](https://github.com/corejs/corejs/blob/master/middleware/logger/transport-mongodb.js), 
-[Redis](https://github.com/corejs/corejs/blob/master/middleware/logger/transport-redis.js) (additionally 
-[File](https://github.com/corejs/corejs/blob/master/middleware/logger/transport-file.js), [Console](https://github.com/corejs/corejs/blob/master/middleware/logger/transport-console.js) via Middleware)_
+- **Logging** &nbsp; _[MongoDB](https://github.com/derdesign/protos/blob/master/middleware/logger/transport-mongodb.js),
+[Redis](https://github.com/derdesign/protos/blob/master/middleware/logger/transport-redis.js) (additionally
+[File](https://github.com/derdesign/protos/blob/master/middleware/logger/transport-file.js), [Console](https://github.com/derdesign/protos/blob/master/middleware/logger/transport-console.js) via Middleware)_
 
 ## Middleware
 
@@ -100,7 +100,7 @@ The Application's functionality can be extended with the following (ready to use
 
 ## Template Engines
 
-There is a lot of flexibility when it comes to template engines. To use a view engine, just add the extension 
+There is a lot of flexibility when it comes to template engines. To use a view engine, just add the extension
 to the template and you're set. You don't need to install any npm dependencies.
 
 View Partials can be used across template engines. This means you can use Jade partials within Swig templates. Or CoffeeKup
@@ -132,7 +132,7 @@ The following view engines are fully integrated with the Framework:
 ## Resources
 
 - Follow [@derdesign](http://twitter.com/derdesign) on Twitter for updates.
-- This site has been developed using CoreJS, check out [its source](http://github.com/corejs/corejs-org).
-- Report issues on the [github issues](https://github.com/corejs/corejs/issues) page.
+- This site has been developed using Protos, check out [its source](http://github.com/derdesign/protos-docs).
+- Report issues on the [github issues](https://github.com/derdesign/protos/issues) page.
 
 [/markdown]

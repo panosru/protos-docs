@@ -1,10 +1,10 @@
 {
-  "name"              : "corejs-org",
-  "description"       : "Application running http://corejs.org",
+  "name"              : "protos-docs",
+  "description"       : "Protos Documentation",
   "version"           : "0.0.1",
   "main"              : "boot.js",
   "engines"           : { "node": ">= 0.6.0" },
   "dependencies"      : { 
-    "corejs"          : ">= 0.0.7"
+    "protos"          : ">= 0.0.1"
   }
 }

@@ -1,7 +1,7 @@
 
-var CoreJS = require('corejs');
+var Protos = require('protos');
 
-CoreJS.bootstrap(__dirname, {
+Protos.bootstrap(__dirname, {
   
   // Server configuration
   
@@ -97,4 +97,4 @@ CoreJS.bootstrap(__dirname, {
   
 });
 
-module.exports = corejs.app;
+module.exports = protos.app;

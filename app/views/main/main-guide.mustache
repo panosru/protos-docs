@@ -3,28 +3,28 @@
 
 ## Installation
 
-    $ npm install corejs
+    $ npm install protos
     
-To have global access to the corejs(1) executable, you can install the framework globally:
+To have global access to the protos(1) executable, you can install the framework globally:
 
-    $ sudo npm install -g corejs
+    $ sudo npm install -g protos
     
 Global installation is the recommended installation method. If the installation fails, it might be because 
 you don't have *libxml2* installed on your sistem.
 
-Your applications will automatically inherit all [the dependencies](https://github.com/corejs/corejs/blob/master/package.json) the framework provides:
+Your applications will automatically inherit all [the dependencies](https://github.com/derdesign/protos/blob/master/package.json) the framework provides:
 
-    var hiredis = corejs.require('hiredis');
+    var hiredis = protos.require('hiredis');
     
 ## Creating an Application
 
 To quickly create an application and get started:
 
-    $ corejs create myapp
+    $ protos create myapp
     
 You can specify more options to the create command:
 
-    $ corejs create myapp --domain corejs.org --js jquery prototype --css bootstrap
+    $ protos create myapp --domain protos.org --js jquery prototype --css bootstrap
 
 The command above will create an an application in the *myapp/* directory. Will download automatically the
 jQuery and Prototype libraries, and store then in *myapp/public/js* and Twitter's Bootstrap CSS framework into
@@ -34,22 +34,22 @@ The `--domain` switch will automatically set the domain in your application's co
 
 To create the application with a default set of Models &amp; Controllers:
 
-    $ corejs create myapp --model users accounts --controller blog admin profile
+    $ protos create myapp --model users accounts --controller blog admin profile
   
-For a full list of options and commands, run `corejs --help`.
+For a full list of options and commands, run `protos --help`.
 
 
 ## Creating Application Resources
 
-The corejs command also allows you to create [Controllers](#applicaton-controllers), [Helpers](#application-views_view-helpers), 
+The protos command also allows you to create [Controllers](#applicaton-controllers), [Helpers](#application-views_view-helpers), 
 [Models](#application-models-api), [Views](#application-views) and [Partials](#view-partials).
 You _must_ be within your application's path to be able to generate new components.
 
 ### Creating Controllers
 
-Controllers are created with the `corejs controller` command. This will also create the _Helpers_ and _Views_:
+Controllers are created with the `protos controller` command. This will also create the _Helpers_ and _Views_:
 
-    $ corejs controller blog admin
+    $ protos controller blog admin
     
 If you don't want helpers to be automatically created, use the `--nohelper` switch.
 
@@ -64,9 +64,9 @@ Here's what the command above creates:
 
 ### Creating Models
 
-Models are created with the `corejs model` command:
+Models are created with the `protos model` command:
 
-    $ corejs model posts comments
+    $ protos model posts comments
     
 Here's what the command above creates:
 
@@ -75,9 +75,9 @@ Here's what the command above creates:
 
 ### Creating Helpers
 
-Helpers are created with the `corejs helper` command:
+Helpers are created with the `protos helper` command:
 
-    $ corejs helper navigation sidebar
+    $ protos helper navigation sidebar
     
 Here's what the command above creates:
 
@@ -86,9 +86,9 @@ Here's what the command above creates:
 
 ### Creating Views
 
-Views are created with the `corejs view` command, using the `{controller-alias}/view-name{.ext}` convention:
+Views are created with the `protos view` command, using the `{controller-alias}/view-name{.ext}` convention:
 
-    $ corejs view main/info blog/posts blog/comments.html admin/accounts
+    $ protos view main/info blog/posts blog/comments.html admin/accounts
     
 Here's the output of the command above:
 
@@ -99,7 +99,7 @@ Here's the output of the command above:
 
 You can use the `--ext` option to create your views using specific extensions:
 
-    $ corejs view main/user main/test --ext jade
+    $ protos view main/user main/test --ext jade
     
 This will create your .jade templates:
 
@@ -108,9 +108,9 @@ This will create your .jade templates:
 
 ### Creating View Partials
 
-View Partials are created with the `corejs partial` command. It uses the same convention as the views:
+View Partials are created with the `protos partial` command. It uses the same convention as the views:
 
-    $ corejs view blog/post admin/sidebar
+    $ protos view blog/post admin/sidebar
     
 Here's the output of the command above:
 
@@ -121,9 +121,9 @@ As with views, you can also specify the `--ext` option to create your partials u
 
 ### Creating Static Views
 
-Static Views are created with the `corejs static` command:
+Static Views are created with the `protos static` command:
 
-    $ corejs static about contact portfolio
+    $ protos static about contact portfolio
     
 Here's the output of the command above:
 
@@ -133,10 +133,37 @@ Here's the output of the command above:
     
 As with views, you can also specify the `--ext` option to create static views using custom extensions.
 
+### Downloading CSS &amp; JavaScript Libraries
+
+You can fetch any JavaScript or CSS Library supported by the framework. For example, run the following command anywhere 
+within your application's path:
+
+    $ protos fetch --js prototype jquery
+    
+This will download the latest versions of [jQuery](http://jquery.com/) &amp; [Prototype](http://prototypejs.org/) and place 
+them inside your application's `public/js` directory.
+
+To install CSS Libraries &amp; Frameworks, you do as such:
+
+    $ protos fetch --css bootstrap blueprint
+    
+This time, you will be downloading the latest versions of [Bootstrap](http://twitter.github.com/bootstrap/) and 
+[Blueprint](http://blueprintcss.org) CSS Frameworks.
+
+You can use both `--css` and `--js` on a single command.
+
+The framework supports client-side libraries via a simple JSON format:
+
+- [Supported JavaScript Libraries](https://github.com/derdesign/protos/blob/master/client/javascript.json)
+- [Supported CSS Frameworks](https://github.com/derdesign/protos/blob/master/client/css.json)
+
+If you're interested in getting your library supported by the framework, send a Pull Request on 
+[github](http://github.com/derdesign/protos).
+
 ## Running the Application's Server
 
 Application scan be run either by calling node directly with the application's directory (or boot file) as input,
-or by using the corejs command to start the server.
+or by using the protos command to start the server.
 
 ### Using the node executable
 
@@ -152,24 +179,24 @@ You can also run the application in a specific environment:
 
     $ NODE_ENV=production node myapp/
 
-### Using the corejs executable
+### Using the protos executable
 
-Applications can also be started using the corejs command:
+Applications can also be started using the protos command:
 
-    $ corejs server myapp/
+    $ protos server myapp/
     
 If you're located anywhere within your application's path
 
-    $ corejs server
+    $ protos server
 
 Additionally, you can specify which environment to use:
 
-    $ corejs server --env production
+    $ protos server --env production
     
 
 You can run the server by forking into a new node process:
 
-    $ corejs server myapp/ --fork --logpath server.log
+    $ protos server myapp/ --fork --logpath server.log
     
 The server's stdout stream will then be redirected into the logpath you specify.
 
@@ -178,7 +205,7 @@ Each application can have more sophisticated logging mechanisms by using the [Lo
 
 ## Deploying a Cluster Server
 
-CoreJS provides a built-in proxy that will automatically direct requests for all your applications. Behind the scenes,
+Protos provides a built-in proxy that will automatically direct requests for all your applications. Behind the scenes,
 it uses the [Bouncy](https://github.com/substack/bouncy) to handle the redirection.
 
 You can deploy your applications &amp; servers using the command line or a JSON file.
@@ -194,7 +221,7 @@ This way, you can manually specify how many cores each application will use.
 
 This is how you run a cluster server from the command line using the `app:port` convention:
 
-    $ corejs server mysite:8081 yoursite:8082 --port 80 --fork --logpath server.log --env production
+    $ protos server mysite:8081 yoursite:8082 --port 80 --fork --logpath server.log --env production
     
 This will run a proxy server on port 80, redirecting all requests to applications/ports specified.
 
@@ -222,24 +249,24 @@ to keep the deployment configuration in a single JSON file.
 ## Running the Node Inspector
 
 You can easily debug your applications using the built-in [node-inspector](https://github.com/dannycoates/node-inspector). This means
-you can use the regular Webkit Inspector to debug your Node.js/CoreJS applications. Cool!
+you can use the regular Webkit Inspector to debug your Node.js/Protos applications. Cool!
 
   > Starting your application in the debug environment will automatically launch the Node Debugger. This means you can jump
   > right into the inspector as soon as you start your application.
   
 To start the inspector:
 
-    corejs inspector start
+    protos inspector start
     
 To stop the inspector:
 
-    corejs inspector stop
+    protos inspector stop
     
 Node inspector listens by default on http://localhost:3000
 
 ## Application Structure
 
-The following tree contains the skeletal application structure, just after running `corejs create myapp`.
+The following tree contains the skeletal application structure, just after running `protos create myapp`.
 
     myapp/
     ├── app
@@ -290,7 +317,7 @@ The following tree contains the skeletal application structure, just after runni
 
 ### app.js
 
-This is the ideal place to store your extensions to the Application constructor's [prototype](https://github.com/corejs/corejs/blob/master/lib/application.js). This file is optional.
+This is the ideal place to store your extensions to the Application constructor's [prototype](https://github.com/derdesign/protos/blob/master/lib/application.js). This file is optional.
 
 ### boot.js
 
@@ -401,7 +428,7 @@ enforces greater application maintainability.
 
 ### Database Configuration
 
-There is something special to know about the _database.js_ and _storage.js_ files. CoreJS introduces the term
+There is something special to know about the _database.js_ and _storage.js_ files. Protos introduces the term
 **resource path**, to refer to a specific configuration.
 
 The database configuration object _must_ contain a _default_ property, which contains the _resource path_ to the configuration
@@ -450,9 +477,9 @@ _storages.js_ file.
 This file is used to start your application. It is very slim and can do lots of things. It is automatically provided to you 
 when creating your applications. Here's what it looks like:
 
-    var CoreJS = require('../');
+    var Protos = require('../');
 
-    CoreJS.bootstrap(__dirname, {
+    Protos.bootstrap(__dirname, {
   
       // Server configuration
       server: {
@@ -483,7 +510,7 @@ when creating your applications. Here's what it looks like:
   
     });
 
-    module.exports = corejs.app;
+    module.exports = protos.app;
 
 Here's a detailed explanation of the several configuration sections:
 
@@ -515,7 +542,7 @@ The boostrap file is ideal also to enable debugging messages in the application 
 
 ## Applicaton Controllers
 
-CoreJS inherits a few things from the [MVC Architecture](http://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller). 
+Protos inherits a few things from the [MVC Architecture](http://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller). 
 Controllers are used to _group_ common routes for a specific _namespace_, or _URL namespace_. For example, consider the following URLs:
 
     http://myapp.com/blog/post
@@ -525,7 +552,7 @@ Controllers are used to _group_ common routes for a specific _namespace_, or _UR
     http://myapp.com/admin/dashboard
     http://myapp.com/admin/account
     
-If you were to create a CoreJS application for these, you have two approaches: Using a single Controller, or using a
+If you were to create a Protos application for these, you have two approaches: Using a single Controller, or using a
 controller for each of your URL namespaces.
 
 ### Using a single Controller
@@ -563,11 +590,11 @@ example above, we would need to use the following controlles in our Application:
 
 Routes that don't match a specific controller (such as _/awesome_), should go in MainController.
 
-If you were to create these controllers, you could use the corejs executable:
+If you were to create these controllers, you could use the protos executable:
 
-    $ corejs controller blog admin
+    $ protos controller blog admin
     
-This will create the necessary files to fully support these controllers. When you use `corejs controller`, you use
+This will create the necessary files to fully support these controllers. When you use `protos controller`, you use
 the _URL namespace_ the controller should use.
 
 The code you need for each controller is outlined below:
@@ -610,7 +637,7 @@ If you want to handle routes with dashes, let's say:
     
 Then, you can create the controller like this:
 
-    $ corejs controller account-summary
+    $ protos controller account-summary
     
 The framework will create **AccountSummaryController**, **AccountSummaryHelper** and all the views needed.
 
@@ -838,7 +865,7 @@ To validate query parameters, the Controller instance provides a method for this
 It is important to mention, that _Route Callbacks_ **run on the controller instance's context**. This means, the `this` object
 points to the controller instance currently accessing the route.
 
-This means you have access to all the methods provided by [Controller](https://github.com/corejs/corejs/blob/master/lib/controller.js).
+This means you have access to all the methods provided by [Controller](https://github.com/derdesign/protos/blob/master/lib/controller.js).
 
 Using `this.getQueryData` ensures that the _Query Parameters_ are validated exactly the same as the _Route Parameters_. Your
 application will automatically respond with HTTP/404 on failure to validate both url fragments &amp; query parameters.
@@ -1023,7 +1050,7 @@ In the table below:
 | /static |  __static/static.html
 | /static.mustache |  __static/static.mustache
 
-You can see how views are used by having a look at the Controllers from the [Test Suite](https://github.com/corejs/corejs/tree/master/test/fixtures/test.skeleton/app/controllers).
+You can see how views are used by having a look at the Controllers from the [Test Suite](https://github.com/derdesign/protos/tree/master/test/fixtures/test.skeleton/app/controllers).
 
 ### View Parameters
 
@@ -1040,7 +1067,7 @@ These parameters will be available as locals within the view.
 
 When rendering views, you have a set of _local variables_ you have access to inside views:
 
-- **corejs** &nbsp; _CoreJS global (available as local)_
+- **protos** &nbsp; _Protos global (available as local)_
 - **app** &nbsp; _Application singleton_
 - **req** &nbsp; _Request Object_
 - **res** &nbsp; _Response Object_
@@ -1051,7 +1078,7 @@ When rendering views, you have a set of _local variables_ you have access to ins
 
 ### Raw Views
 
-CoreJS introduces the concept of _Raw Views_, to the views that don't render a header/footer. These are still rendered in
+Protos introduces the concept of _Raw Views_, to the views that don't render a header/footer. These are still rendered in
 `text/html`, but only the requested view is rendered, not the other template parts.
 
 > By default, the Application has _Raw Views_ disabled. You can enable _Raw Views_ globally within your application, by
@@ -1120,11 +1147,11 @@ Each time you access the URLs above, these templates will be used.
 
 ## View Partials
 
-View Partials are one of the beauties of CoreJS. You can mix &amp; match any view engine. Your application doesn't actually
+View Partials are one of the beauties of Protos. You can mix &amp; match any view engine. Your application doesn't actually
 care which template engine you use, you can still use partials.
 
 One thing to have in mind, your template's rendering engines will work just fine. This section covers the _View Partials_, as
-implemented across all the view engines within CoreJS.
+implemented across all the view engines within Protos.
 
 Important things to know about view partials:
 
@@ -1138,7 +1165,7 @@ Important things to know about view partials:
 To learn to create view partials, refer to the [Creating View Partials](#creating-application-resources_creating-view-partials) section.
 
   > The View Partials are exposed as local functions within your views. Most views allow running regular JavaScript functions and
-  > receiving parameters passed as their _locals_. CoreJS uses this common approach and exploits its full potential.
+  > receiving parameters passed as their _locals_. Protos uses this common approach and exploits its full potential.
 
 ### Exposed Functions
 
@@ -1223,7 +1250,7 @@ The framework provides a default set of helpers you can use:
 
 ## Application Models &amp; API
 
-Models provide an abstraction of data operations. CoreJS Models have _ORM_ built-in. They are _database-agnostic_ by nature, which
+Models provide an abstraction of data operations. Protos Models have _ORM_ built-in. They are _database-agnostic_ by nature, which
 means you can define your data structure in the model, and you don't need to care about the underlying database.
 
 Models use Drivers behind the scenes to perform database operations. The Drivers themselves perform low-level operations in the
@@ -1266,7 +1293,7 @@ The following table explains the different keywords:
 
   > The model will automatically typecast values to their respective JavasCript Native Objects.
   
-One of the most powerful things about CoreJS's model implementation, are the _Object Types_. You can safely store _JavaSript
+One of the most powerful things about Protos's model implementation, are the _Object Types_. You can safely store _JavaSript
 Hashes_ and _Arrays_ into model properties.
 
 The _type_ keyword will define how the data will be typecasted. You still need to set validation rules, since validation is
@@ -1350,7 +1377,7 @@ The table below shows the model methods and their equivalent:
 
 ### The Model Generator Concept
 
-CoreJS introduces the _"Model Generator"_ concept. In JavaScript &amp; Node.js, most callbacks are asynchronous. This makes the
+Protos introduces the _"Model Generator"_ concept. In JavaScript &amp; Node.js, most callbacks are asynchronous. This makes the
 usual ORM approach to create an object and _then_ synchronously saving its settings is not that intuitive with most database 
 modules running asynchronously.
 
@@ -1406,7 +1433,7 @@ caching functionality. 100% Free.
 
 ### Model Relationships
 
-CoreJS implements relationships between models. Relationships allow _Model Objects_ to connect with other model objects, adding
+Protos implements relationships between models. Relationships allow _Model Objects_ to connect with other model objects, adding
 the additional ability to perform actions on such relationships.
 
 Relationships only affect _Model Objects_. Each relationship, depending if it is _Inbound_ or _Outbound_, will modify either
@@ -1563,10 +1590,10 @@ can work with it:
 You specify the _resource path_ to the Driver you want to use. Such driver uses the configuration specified in 
 _config/database.js_. Driver instances are available via `app.drivers`.
 
-CoreJS implements the following Drivers, which can be used to power Models:
+Protos implements the following Drivers, which can be used to power Models:
 
-- [MongoDB](https://github.com/corejs/corejs/blob/master/drivers/mongodb.js)
-- [MySQL](https://github.com/corejs/corejs/blob/master/drivers/mysql.js)
+- [MongoDB](https://github.com/derdesign/protos/blob/master/drivers/mongodb.js)
+- [MySQL](https://github.com/derdesign/protos/blob/master/drivers/mysql.js)
 
 If you're interested in contributing a new Database Driver, you're welcome to do so. You have a clean API to work with, so
 it's pretty easy to implement new Database Drivers into the framework. Also, the source has been documented properly.
@@ -1603,7 +1630,7 @@ the cache will remain valid until something invalidates it.
 
 ### Cache storage
 
-This example uses the [MongoDB](https://github.com/corejs/corejs/blob/master/drivers/mongodb.js) driver to cache the `homepage_query`:
+This example uses the [MongoDB](https://github.com/derdesign/protos/blob/master/drivers/mongodb.js) driver to cache the `homepage_query`:
 
     mongodb.queryAll({
       collection: 'users',
@@ -1618,7 +1645,7 @@ records and cache the results into the `homepage_query` ID. This will happen unt
 
 ### Cache Invalidation
 
-This example uses the [MongoDB](https://github.com/corejs/corejs/blob/master/drivers/mongodb.js) driver to invalidate the `homepage_query` cache:
+This example uses the [MongoDB](https://github.com/derdesign/protos/blob/master/drivers/mongodb.js) driver to invalidate the `homepage_query` cache:
 
     mongodb.insertInto({
       collection: 'users',
@@ -1661,25 +1688,25 @@ All the methods have the same effect, regardless of which storage backend you us
 
 ### Available Storages
 
-CoreJS provides the following Storages:
+Protos provides the following Storages:
 
-- [MongoDB](https://github.com/corejs/corejs/blob/master/storages/mongodb.js)
-- [Redis](https://github.com/corejs/corejs/blob/master/storages/redis.js)
+- [MongoDB](https://github.com/derdesign/protos/blob/master/storages/mongodb.js)
+- [Redis](https://github.com/derdesign/protos/blob/master/storages/redis.js)
 
-For more information about the Storage API, you can check out [its source](https://github.com/corejs/corejs/blob/master/lib/storage.js).
+For more information about the Storage API, you can check out [its source](https://github.com/derdesign/protos/blob/master/lib/storage.js).
 
 ## Application &amp; Framework Methods
 
-CoreJS provides several methods in the Application Singleton that you can use right away in your applications. You can start 
+Protos provides several methods in the Application Singleton that you can use right away in your applications. You can start 
 using these with your applications. Full documentation can be found in the source code.
 
 ### Application API
 
 For a list of the methods implemented in the application singleton, refer to the 
-[application.js](https://github.com/corejs/corejs/blob/master/lib/application.js) source. 
+[application.js](https://github.com/derdesign/protos/blob/master/lib/application.js) source. 
 
-### CoreJS API
+### Protos API
 
-To see the available methods provided by the framework's internals, refer to the sources in [lib/](https://github.com/corejs/corejs/tree/master/lib)
+To see the available methods provided by the framework's internals, refer to the sources in [lib/](https://github.com/derdesign/protos/tree/master/lib)
 
 [/markdown]

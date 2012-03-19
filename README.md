@@ -1,3 +1,3 @@
-# corejs-org
+# protos-org
 
-Repository holding the code for [corejs.org](http://corejs.org).
+Protos Documentation.

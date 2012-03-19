@@ -5,7 +5,7 @@
   Methods provided by this helper are exposed in views as `$method`.
   
   This helper inherits the default methods provided by the Helper class,
-  available in `corejs.lib.helper`.
+  available in `protos.lib.helper`.
   
   You can extend this helper and provide your own methods to be made
   available in all views using the naming convention explained above.

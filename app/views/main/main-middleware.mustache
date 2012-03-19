@@ -26,7 +26,7 @@ for .coffee files, for example.
   
 ### Adding Extensions & Compilers
 
-You can define your own extensions and compilers to be used by the application. CoreJS provides a solid
+You can define your own extensions and compilers to be used by the application. Protos provides a solid
 platform in which you can extend upon, and integrate your own asset compilers. Here's how you do it:
 
 1. Add the custom extension in the `compile` array
@@ -95,7 +95,7 @@ The request fields will be validated against the route's validation rules.
 ### FileManager Class
 
 The middleware provides the _FileManager_, which is used to remove unwanted file uploads. For the available methods, you
-can check out [its source](https://github.com/corejs/corejs/blob/master/middleware/body_parser/file_manager.js).
+can check out [its source](https://github.com/derdesign/protos/blob/master/middleware/body_parser/file_manager.js).
 
 ### Usage
 
@@ -146,7 +146,7 @@ You can get a specific file object (that is, a File instance provided by formida
     
 There is a more sophisticated method of _FileManager_, called `expect`, which validates the existence of uploaded files. That is, to add an extra
 layer of security and make sure you're receiving the files you are expecting. For more info and documentation on this feature/method,
-refer to [its source](https://github.com/corejs/corejs/blob/master/middleware/body_parser/file_manager.js).
+refer to [its source](https://github.com/derdesign/protos/blob/master/middleware/body_parser/file_manager.js).
 
 
 ## cookie_parser
@@ -154,7 +154,7 @@ refer to [its source](https://github.com/corejs/corejs/blob/master/middleware/bo
 Parses cookie headers, Integrates with Sessions & Authentication. It adds methods to the _OutgoingMessage_ objects (or better said,
 the _request_ objects).
 
-To see all the cookie manipulation methods, check out [the source](https://github.com/corejs/corejs/tree/master/middleware/cookie_parser).
+To see all the cookie manipulation methods, check out [the source](https://github.com/derdesign/protos/tree/master/middleware/cookie_parser).
 
 ## csrf
 
@@ -202,10 +202,10 @@ the `error_log` event is automatically emitted with the error in question.
 
 The middleware provides the following transports:
 
-- [MongoDB](https://github.com/corejs/corejs/blob/master/middleware/logger/transport-mongodb.js)
-- [Redis](https://github.com/corejs/corejs/blob/master/middleware/logger/transport-redis.js)
-- [File](https://github.com/corejs/corejs/blob/master/middleware/logger/transport-file.js)
-- [Console](https://github.com/corejs/corejs/blob/master/middleware/logger/transport-console.js)
+- [MongoDB](https://github.com/derdesign/protos/blob/master/middleware/logger/transport-mongodb.js)
+- [Redis](https://github.com/derdesign/protos/blob/master/middleware/logger/transport-redis.js)
+- [File](https://github.com/derdesign/protos/blob/master/middleware/logger/transport-file.js)
+- [Console](https://github.com/derdesign/protos/blob/master/middleware/logger/transport-console.js)
 
 ### Configuration Options
 
@@ -313,7 +313,7 @@ Provides complete session management for applications.
 
 ### Session Conventions
 
-CoreJS can automatically detect if a user is logged in or not, depending on the values stored in the session. 
+Protos can automatically detect if a user is logged in or not, depending on the values stored in the session. 
 
   > If the `user` property is present in the session data, the user is assumed to be logged in
 
