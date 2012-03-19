@@ -1,3 +1,3 @@
-# protos-org
+# protos-docs
 
 Protos Documentation.
