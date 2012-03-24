@@ -1,4 +1,5 @@
 
+var crypto = require('crypto');
 var Protos = require('protos');
 
 Protos.bootstrap(__dirname, {
@@ -32,7 +33,7 @@ Protos.bootstrap(__dirname, {
         infoLevel: {console: true},
         errorLevel: {console: true}
       });
-
+      
     },
 
     production: function(app) {
@@ -48,7 +49,7 @@ Protos.bootstrap(__dirname, {
         infoLevel: {file: 'info.log'},
         errorLevel: {file: 'error.log'}
       });
-
+      
     }
   },
   
@@ -91,6 +92,10 @@ Protos.bootstrap(__dirname, {
       app.use('response_cache', {
         storage: 'redis:response_cache'
       });
+      
+      // Display worker pid
+      var pid = crypto.createHash('md5').update(process.pid+'').digest('hex').slice(-5);
+      app.config.headers['X-Worker-Pid'] = function() { return pid; }
       
       // Load lib extensions
       app.libExtensions();
