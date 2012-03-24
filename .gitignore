@@ -3,3 +3,4 @@
 /node_modules
 /log/*.log
 /public/css/*.css
+/public/js/client.min.js
