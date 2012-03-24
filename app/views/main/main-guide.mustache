@@ -202,7 +202,47 @@ The server's stdout stream will then be redirected into the logpath you specify.
 
 Each application can have more sophisticated logging mechanisms by using the [Logger Middleware](/middleware#logger).
 
+## Protos Executable
 
+If you installed Protos globally with `npm -g install protos`, you have access to the `protos(1)` executable:
+
+    $ protos
+    Usage: protos [action] [arguments]
+
+    Actions: [create, server, deploy, fetch, inspector] [controller, helper, model, view, partial, static]
+
+      --domain        Domain to attach the application to (create)
+      --css           Bundle client side CSS frameworks (create)
+      --js            Bundle client side JavaScript libraries/frameworks (create)
+      --model         Include models on application (create)
+      --controller    Include controllers on application (create)
+      --mustache      Use the .mustache extension for generated views (create)
+      --fork          Creates a new node process when starting servers (server)
+      --port          Port to use when proxying multiple servers (server)
+      --env           Environment to use when running server (server)
+      --logpath       File to save output when forking a new process (server)
+      --nohelper      Don't create helpers when generating controllers (controller)
+      --ext           Extension to use for generated normal/static/partial views (view)
+
+    Example:
+
+     $ protos create myapp --css bootstrap --js jquery backbone --model users --controller admin user
+
+     Generate an application skeleton in the current directory, with the assets,
+     models and controllers specified in the command.
+
+     $ protos server myapp --fork --logpath server.log
+
+     Starts the application's server and forks a new node process.
+
+     For documentation, refer to http://protos.der-design.com
+
+     protos@0.0.2 /usr/local/lib/node_modules/protos
+
+If you did not install the framework globally, you can access the `protos(1)` command by running `bin/protos` inside the
+framework's directory.
+
+     
 ## Deploying a Cluster Server
 
 Protos provides a built-in proxy that will automatically direct requests for all your applications. Behind the scenes,
@@ -288,7 +328,6 @@ The following tree contains the skeletal application structure, just after runni
     │       │   └── readme.md
     │       └── main
     │           └── main-index.html
-    ├── app.js
     ├── boot.js
     ├── config
     │   ├── base.js
@@ -299,9 +338,15 @@ The following tree contains the skeletal application structure, just after runni
     │   │   └── production.js
     │   ├── regex.js
     │   └── storage.js
+    ├── data
+    │   └── readme.md
     ├── incoming
     │   └── readme.md
     ├── init.js
+    ├── lib
+    │   ├── application.js
+    │   ├── request.js
+    │   └── response.js
     ├── log
     ├── middleware
     │   └── readme.md
@@ -374,9 +419,21 @@ You can find more information on the [Application Configuration](#application-co
 Files matching the current environment will be looked up here. For example: _development.js_, _production.js_, etc. The code
 in these scripts will run **before** the environment functions in the [bootstrap](#the-applications-bootstrap-file-bootjs) file.
 
+### data/
+
+Any kind of data related to the application. This directory has been included for convenience purposes. You can store any
+type of scripts and/or information here.
+
 ### incoming/
 
 Directory to hold File Uploads. This is the upload location for the [Body Parser Middleware](/middleware#body_parser).
+
+### lib/
+
+These are called _Application Extensions_, loaded when calling `app.loadExtensions()` on the [bootstrap](#the-applications-bootstrap-file-bootjs) file.
+
+The ideal usage for these _libraries_ is to extend the core functionality of Node's classes, as well as extending the Application's methods and properties. You 
+can also use this directory to extend your application with any new classes and methods.
 
 ### log/
 
@@ -500,11 +557,17 @@ when creating your applications. Here's what it looks like:
       // Application events
       events: {
         init: function(app) {
+      
+          // Load middleware
           app.use('logger');
           app.use('markdown');
           app.use('body_parser');
           app.use('cookie_parser');
           app.use('static_server');
+      
+          // Load extensions in lib/
+          app.libExtensions();
+
         }
       }
   
@@ -1167,6 +1230,10 @@ To learn to create view partials, refer to the [Creating View Partials](#creatin
   > The View Partials are exposed as local functions within your views. Most views allow running regular JavaScript functions and
   > receiving parameters passed as their _locals_. Protos uses this common approach and exploits its full potential.
 
+### Automatic Watching for Changes
+
+On all environments except **production**, the framework re-compiles the view partial functions whenever any changes are made to the template files.
+
 ### Exposed Functions
 
 The table below shows the location and the explosed function name. Paths are relative to _app/views_.
@@ -1184,6 +1251,7 @@ partial into the view:
     <div class="post-comment">
       #{blog_post_comment(locals.comments)}
     </div><!-- .post-comment -->
+
 
 ## View Helpers
 
@@ -1226,7 +1294,7 @@ Let's say you have created the following _Helpers_ in your Application:
 
 Then, your views will have the following methods exposed:
 
-- `hello_world`
+- `$hello_world`
 - `$accounts_show_info`
 - `$dashboard_render_widget`
 
@@ -1240,12 +1308,18 @@ The following are important things to know about View Helpers:
 
 The framework provides a default set of helpers you can use:
 
-- **$stylesheet**: _Inserts a &lt;link&gt; to a stylesheet into the view_
-- **$script**: _Inserts a &lt;script&gt; element into the view_
-- **$link**: _Inserts an &lt;a&gt; anchor into the view_
 - **$sanitize**: _Sanitizes input_
 - **$escape**: _Escapes input_
 - **$safe_str_**: _Sanitizes &amp; Escapes input_
+
+### Accessing View Helpers
+
+All of the application's helpers can be accessed via the `app.helpers` object, using the helper alias. Also, 
+helpers can be accessed using alias properties in the Application's singleton. For example:
+
+- `app.helpers.main` &raquo; `app.mainHelper`
+- `app.helpers.utils` &raquo; `app.utilsHelper`
+- `app.helpers.custom-stuff` &raquo; `app.customStuffHelper`
 
 
 ## Application Models &amp; API

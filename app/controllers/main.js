@@ -27,6 +27,7 @@ function MainController(app) {
   
   get('/:page', {page: 'sitePages'}, function(req, res, params) {
     if (production) res.useCache(params.page);
+    req.setPageTitle(params.page);
     res.render(params.page, {
       activePage: params.page
     });

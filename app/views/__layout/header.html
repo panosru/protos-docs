@@ -1,31 +1,33 @@
 <!DOCTYPE html>
-<html lang="#{app.config.language}" id="top">
+<html lang="<?= app.config.language ?>" id="top">
 <head>
-<title>#{app.config.title}</title>
-<meta charset="#{app.config.encoding}" />`
+<title><?= req.pageTitle() ?></title>
+<meta charset="<?= app.config.encoding ?>" />
 
-if (app.environment === 'production') {`
+<meta name='description' content='Web Application Framework for node.js'/>
+<meta name='keywords' content='mvc, web, application, framework, node, nodejs, node.js, js, javascript, restful, middleware' />
+<? if (app.environment === 'production') { ?>
 <link rel="stylesheet" type="text/css" href="/css/client.min.css" />
 <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic,700italic" />
-`} else {`
+<? } else { ?>
 <link rel="stylesheet" type="text/css" href="/css/blueprint.css" />
 <link rel="stylesheet" type="text/css" href="/css/print.css" />
 <link rel="stylesheet" type="text/css" href="/css/main.css" />
-`}`</head>
-<body#{$page_id(locals)}>
+<? } ?></head>
+<body<?- $page_id(locals) ?>>
   
 <div id="header" class="fw">
   <div class="wrap">
-    <a id="logo" href="#{app.url()}"><img alt="Protos" width="325" height="75" src="/images/logo.png" /></a>
+    <a id="logo" href="<?- app.url() ?>"><img alt="Protos" width="325" height="75" src="/images/logo.png" /></a>
     <span>Web Application Framework for <a href="http://nodejs.org">node.js</a></span>
   </div><!-- .wrap -->
 </div><!-- header -->
 
 <div id="nav-wrap">
   <ul id="nav">
-    <li#{$active_page(locals, 'features')}><a href="/">Features</a></li>
-    <li#{$active_page(locals, 'guide')}><a href="/guide">Guide</a></li>
-    <li#{$active_page(locals, 'middleware')}><a href="/middleware">Middleware</a></li>
+    <li<?- $active_page(locals, 'features') ?>><a href="/">Features</a></li>
+    <li<?- $active_page(locals, 'guide') ?>><a href="/guide">Guide</a></li>
+    <li<?- $active_page(locals, 'middleware') ?>><a href="/middleware">Middleware</a></li>
     <li><a href="https://github.com/derdesign/protos">Github</a></li>
   </ul><!-- nav -->
 </div><!-- nav-wrap -->

@@ -3,7 +3,7 @@
 
 module.exports = {
   
-  title: 'Protos &mdash; Web Application Framework',
+  title: 'Protos Web Framework',
   language: 'en-US',
   encoding: 'utf-8',
   rawViews: false,
@@ -35,14 +35,11 @@ module.exports = {
   },
   
   engines: {
-    liquor: {
-      pretty: true,
-      indent: 0
-    }
+    ejs: {open: '<?', close: '?>'}
   },
   
   viewExtensions: {
-    html: 'liquor',
+    html: 'ejs',
     mustache: 'hogan'
   }
 

@@ -91,6 +91,9 @@ Protos.bootstrap(__dirname, {
       app.use('response_cache', {
         storage: 'redis:response_cache'
       });
+      
+      // Load lib extensions
+      app.libExtensions();
     }
   
   }
