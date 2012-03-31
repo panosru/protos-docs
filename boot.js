@@ -92,13 +92,6 @@ Protos.bootstrap(__dirname, {
       app.use('response_cache', {
         storage: 'redis:response_cache'
       });
-      
-      // Display worker pid
-      var pid = crypto.createHash('md5').update(process.pid+'').digest('hex').slice(-5);
-      app.config.headers['X-Worker-Pid'] = function() { return pid; }
-      
-      // Load lib extensions
-      app.libExtensions();
     }
   
   }

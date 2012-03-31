@@ -1,6 +1,8 @@
 
 /* Main Configuration */
 
+var pid = protos.app.md5(process.pid+'').slice(-5);
+
 module.exports = {
   
   title: 'Protos Web Framework',
@@ -12,7 +14,8 @@ module.exports = {
     'Content-Type': function(req, res) { return "text/html; charset=" + this.config.encoding; },
     'Date': function() { return new Date().toUTCString(); },
     'Status': function(req, res) {  return res.statusCode + " " + this.httpStatusCodes[res.statusCode]; },
-    'X-Powered-By': 'protos'
+    'X-Powered-By': 'protos',
+    'X-Worker-Pid': function() { return pid; }
   },
   
   server: {
