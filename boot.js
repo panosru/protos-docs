@@ -1,5 +1,4 @@
 
-var crypto = require('crypto');
 var Protos = require('protos');
 
 Protos.bootstrap(__dirname, {
