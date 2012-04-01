@@ -286,6 +286,12 @@ For example: create a **cluster.json** file with the following contents:
 These settings are analogous to the command line example. This method is very convenient, since it allows you
 to keep the deployment configuration in a single JSON file.
 
+To run a cluster server using a JSON deployment file, run the following:
+
+    $ protos deploy cluster.json
+    
+You are not limited to _cluster.json_ as the filename. The JSON file can be saved with any filename.
+
 ## Running the Node Inspector
 
 You can easily debug your applications using the built-in [node-inspector](https://github.com/dannycoates/node-inspector). This means
