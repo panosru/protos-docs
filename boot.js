@@ -88,9 +88,9 @@ Protos.bootstrap(__dirname, {
       }
       
       // Optimize performance by caching responses in storage
-      app.use('response_cache', {
-        storage: 'redis:response_cache'
-      });
+      // app.use('response_cache', {
+      //   storage: 'redis:response_cache'
+      // });
     }
   
   }

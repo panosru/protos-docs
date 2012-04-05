@@ -16,17 +16,17 @@
 
 function MainController(app) {
   
-  var production = (app.environment == 'production');
+  // var production = (app.environment == 'production');
   
-  get('/', function(req, res) {
-    if (production) res.useCache('features');
+  get('/:index', {index: /^(|index\.html)$/}, function(req, res) {
+    // if (production) res.useCache('features');
     res.render('features', {
       activePage: 'features'
     });
   });
   
-  get('/:page', {page: 'sitePages'}, function(req, res, params) {
-    if (production) res.useCache(params.page);
+  get('/:page.html', {page: 'sitePages'}, function(req, res, params) {
+    // if (production) res.useCache(params.page);
     req.setPageTitle(params.page);
     res.render(params.page, {
       activePage: params.page

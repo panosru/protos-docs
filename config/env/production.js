@@ -7,7 +7,7 @@ function Production(app) {
   app.viewCaching = true;
   
   // Remove port number when running in production
-  app.use('production_url');
+  // app.use('production_url');
 
 }
 
