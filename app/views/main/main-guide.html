@@ -200,7 +200,7 @@ You can run the server by forking into a new node process:
     
 The server's stdout stream will then be redirected into the logpath you specify.
 
-Each application can have more sophisticated logging mechanisms by using the [Logger Middleware](/middleware#logger).
+Each application can have more sophisticated logging mechanisms by using the [Logger Middleware](middleware.html#logger).
 
 ## Protos Executable
 
@@ -432,7 +432,7 @@ type of scripts and/or information here.
 
 ### incoming/
 
-Directory to hold File Uploads. This is the upload location for the [Body Parser Middleware](/middleware#body_parser).
+Directory to hold File Uploads. This is the upload location for the [Body Parser Middleware](middleware.html#body_parser).
 
 ### lib/
 
@@ -443,7 +443,7 @@ can also use this directory to extend your application with any new classes and 
 
 ### log/
 
-Directory that holds the Application's log files. This is the storage location for the [Logger Middleware](/middleware#logger).
+Directory that holds the Application's log files. This is the storage location for the [Logger Middleware](middleware.html#logger).
 
 ### middleware/
 
@@ -941,9 +941,9 @@ application will automatically respond with HTTP/404 on failure to validate both
 
 The validated fields are passed in the `fields` argument of the `getQueryData` callback.
 
-Validation is also closely integrated with the [CSRF Middleware](/middleware#csrf). This means, you can provide an extra
+Validation is also closely integrated with the [CSRF Middleware](middleware.html#csrf). This means, you can provide an extra
 argument to `getQueryData`, and that is the _CSRF Token_, which will add an extra layer of validation. For more info, 
-check out the CSRF Middleware [documentation](/middleware#csrf).
+check out the CSRF Middleware [documentation](middleware.html#csrf).
 
 ### Validation of URL & Query Parameters
 
@@ -1074,7 +1074,7 @@ There are a few important things to know about Controller Filters to be able to 
 
 ### Auth Filters &amp; Sessions
 
-When using the [Sessions Middleware](/middleware#session), it automatically provides a authentication filter for you, which
+When using the [Sessions Middleware](middleware.html#session), it automatically provides a authentication filter for you, which
 deeply integrates with both the controller and your application.
 
 If/when you enable the _Sessions Middleware_, you can specify a property in your controllers, to determine
@@ -1083,7 +1083,7 @@ if such controller requires authentication: the `authRequired` property.
 ### The authRequired property
 
 This only applies if the _Sessions Middleware_ is enabled. It has no effect otherwise.<br/>
-For a detailed documentation on this property, refer to the _Sessions Middleware_ [documentation](/middleware#session).
+For a detailed documentation on this property, refer to the _Sessions Middleware_ [documentation](middleware.html#session).
 
 
 ## Application Views

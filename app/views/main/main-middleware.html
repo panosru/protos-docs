@@ -88,7 +88,7 @@ The files uploaded will be stored in your app's `incoming/` directory.
 The middleware exposes a new method for controllers: `getRequestData`, which retrieves POST fields & files, with validation &amp; 
 CSRF protection. If the CSRF token is specified, the request will be validated against it. On failure to validate, an HTTP/400 response will be sent.
 
-The method works similarly as the [getQueryData](/guide#routes_validation-of-route-parameters) method, originally provided by Controller.
+The method works similarly as the [getQueryData](guide.html#routes_validation-of-route-parameters) method, originally provided by Controller.
 
 The request fields will be validated against the route's validation rules.
 
