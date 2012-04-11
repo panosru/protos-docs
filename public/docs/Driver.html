@@ -1,0 +1,537 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html xmlns:yui="http://yuilibrary.com/rdf/1.0/yui.rdf#">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>API: lib  Driver   (Protos Web Framework)</title>
+
+  <link rel="stylesheet" type="text/css" href="assets/reset-fonts-grids-min.css" />
+  <link rel="stylesheet" type="text/css" href="assets/api.css" />
+  <link type="text/css" rel="stylesheet" href="assets/sh/styles/shCoreDefault.css" />
+  <link type="text/css" rel="stylesheet" href="assets/client.css" />
+
+  <script type="text/javascript" src="assets/api-js"></script>
+  <script type="text/javascript" src="assets/ac-js"></script>
+
+  <script type="text/javascript" src="assets/jquery-1.7.1.js"></script>
+  <script type="text/javascript" src="assets/jquery.base64.js"></script>
+  <script type="text/javascript" src="assets/sh/scripts/shCore.js"></script>
+  <script type="text/javascript" src="assets/sh/scripts/shBrushJScript.js"></script>
+  <script type="text/javascript" src="assets/client.js"></script>
+
+</head>
+
+<body id="yahoo-com">
+
+<div id="doc3" class="yui-t2">
+	<div id="hd">
+        <h1><a href="http://derdesign.github.com/protos" title="Protos Web Framework">Protos Web Framework</a></h1>
+        <h3>lib&nbsp; <span class="subtitle">0.0.4</span></h3>
+        <a href="./index.html" title="Protos Web Framework">Protos Web Framework</a> 
+            &gt; <a href="./module_lib.html" title="lib">lib</a>
+                 &gt; Driver 
+                
+        <form onsubmit="return false">
+            <div id="propertysearch">
+                Search: <input autocomplete="off" id="searchinput" />
+                <div id="searchresults">
+                    &nbsp;
+                </div>
+            </div>
+        </form>
+	</div>
+
+	<div id="bd">
+		<div id="yui-main">
+			<div class="yui-b">
+            <form action="#" name="yui-classopts-form" method="get" id="yui-classopts-form">
+                <fieldset>
+                    <legend>Filters</legend>
+                <span class="classopts"><input type="checkbox" name="show_private" id="show_private" /> <label for="show_private">Show Private</label></span>
+                <span class="classopts"><input type="checkbox" name="show_protected" id="show_protected" /> <label for="show_protected">Show Protected</label></span>
+                <span class="classopts"><input type="checkbox" name="show_deprecated" id="show_deprecated" /> <label for="show_deprecated">Show Deprecated</label></span>
+                </fieldset>
+            </form>
+
+                    <h2>
+                        <code>private</code>
+
+                        
+                        
+                            Class <b property="yui:name">Driver</b>
+                        <span class="extends">
+                        </span>
+
+                    </h2>
+                    <!-- class tree goes here -->
+                    
+                        <dl class="subclasses" rel="yui:subclasses">
+                            <dt>Known Subclasses:</dt>
+                            <dd>
+                                    <span rel="yui:subclass" resource="driver.MySQL.html">
+                                    <a href="driver.MySQL.html" property="yui:name" title="driver.MySQL">driver.MySQL</a>
+                                    </span>
+                                    <span rel="yui:subclass" resource="driver.MongoDB.html">
+                                    <a href="driver.MongoDB.html" property="yui:name" title="driver.MongoDB">driver.MongoDB</a>
+                                    </span>
+                            </dd>
+                       </dl>
+                
+  
+
+                    <div class="summary description" property="yui:description">
+                        <div class="base64-encoded">PHA+RHJpdmVyIGNsYXNzLiBJbXBsZW1lbnRzIHRoZSBNb2RlbCBBUEkuPC9wPg==</div>
+                    </div>
+
+                        <div class="section constructor details" rel="yui:constructor" resource="#constructor">
+                        <h3 id="constructor">Constructor</h3>
+                        <div class="content">
+                            <div class="detail">
+                                <strong property="yui:name">Driver</strong>
+                                <code>
+                                    (
+                                    )
+                                </code>
+                                <div class="description">
+                                    
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div rel="yui:properties" resource="#properties">
+                        <div class="section field details">
+                            <h3 id="properties">Properties</h3>
+                            <div class="content">
+                                    <div class="private" rel="yui:property" resource="#property___modelMethods">
+                                    <h4><a name="property___modelMethods" property="yui:name">__modelMethods</a>
+                                        - <code>private <span property="yui:type">object</span></code>
+                                    </h4>
+                                    <div class="detail">
+                                        <div class="description" property="yui:description">
+                                            <div class="base64-encoded">PHA+PHN0cm9uZz5NT0RFTCBBUEk8L3N0cm9uZz48L3A+Cgo8cD4gIFRoZSBNb2RlbCBBUEkgbWV0aG9kcyBydW4gaW4gdGhlIG1vZGVsIGNvbnRleHQuCiAgVGhlIDxjb2RlPnRoaXM8L2NvZGU+IG9iamVjdCBwb2ludHMgdG8gdGhlIG1vZGVsIGluc3RhbmNlIHRoYXQKICBpbmhlcml0ZWQgdGhlIG1ldGhvZHMgYmVsb3cuPC9wPgoKPHA+ICBUaGUgZHJpdmVyIGluc3RhbmNlIGF0dGFjaGVkIHRvIHRoZSBtb2RlbCBjYW4gYmUKICBhY2Nlc3NlZCB2aWEgPGNvZGU+dGhpcy5kcml2ZXI8L2NvZGU+LjwvcD4KCjxwPiAgPHN0cm9uZz5JTVBMRU1FTlRBVElPTjwvc3Ryb25nPjwvcD4KCjxwPiAgT25seSB0aGUgZW1wdHkgZnVuY3Rpb25zIHNob3VsZCBiZSBpbXBsZW1lbnRlZCBpbiB0aGUKICBkcml2ZXJzLiBUaGUgb25lcyB0aGF0IHByb3ZpZGUgY29tbW9uIGZ1bmN0aW9uYWxpdHkKICAmYW1wOyBhbGlhc2VzIGFyZSBwYXNzZWQgb3ZlciB0byB0aGUgbW9kZWwgYW5kIGludGVncmF0ZQogIHNlYW1sZXNzbHkgd2l0aCBpdC48L3A+Cgo8cD4gIDxzdHJvbmc+Q0FDSElORzwvc3Ryb25nPjwvcD4KCjxwPiAgTW9kZWwgY2FjaGluZyBpcyBkb25lIGJ5IHRoZSB1bmRlcmx5aW5nIGRyaXZlciwgd2hpY2gKICBhYnN0cmFjdHMgdGhlIGNhY2hpbmcgZnVuY3Rpb25hbGl0eSBmcm9tIHRoZSBtb2RlbC48L3A+Cgo8cD4gIEFsbCB0aGUgbW9kZWwgbWV0aG9kcyBpbiB0aGUgQVBJIHJlY2VpdmUgYSA8Y29kZT5jZGF0YTwvY29kZT4KICBwYXJhbWV0ZXIsIHdoaWNoIGlzIHVzZWQgdG8gY29udHJvbCB0aGUgZHJpdmVyYHMgY2FjaGUKICBtZWNoYW5pc20uPC9wPg==</div>
+                                        </div>
+                                    </div>
+     
+                                        
+
+
+                                    <hr />
+                                    </div>
+                                    <div class="private" rel="yui:property" resource="#property_cacheKeys">
+                                    <h4><a name="property_cacheKeys" property="yui:name">cacheKeys</a>
+                                        - <code>private <span property="yui:type">array</span></code>
+                                    </h4>
+                                    <div class="detail">
+                                        <div class="description" property="yui:description">
+                                            <div class="base64-encoded">PHA+Q2FjaGUga2V5cy4gSWYgb3ZlcnJpZGRlbiwgdGhlc2Ugc2hvdWxkIGJlIHNwZWNpZmllZCBpbiB0aGUgc2FtZSBvcmRlcjwvcD4=</div>
+                                        </div>
+                                    </div>
+     
+                                        
+                                    <div class="default" property="yui:defaultValue">
+                                        Default Value: ['cacheID', 'cacheTimeout', 'cacheInvalidate']
+                                    </div>        
+
+
+                                    <hr />
+                                    </div>
+                                    <div class="private" rel="yui:property" resource="#property_maxCacheTimeout">
+                                    <h4><a name="property_maxCacheTimeout" property="yui:name">maxCacheTimeout</a>
+                                        - <code>private <span property="yui:type">integer</span></code>
+                                    </h4>
+                                    <div class="detail">
+                                        <div class="description" property="yui:description">
+                                            <div class="base64-encoded">PHA+Q2FjaGUgdGltZW91dDwvcD4=</div>
+                                        </div>
+                                    </div>
+     
+                                        
+                                    <div class="default" property="yui:defaultValue">
+                                        Default Value: 31536000
+                                    </div>        
+
+
+                                    <hr />
+                                    </div>
+                                    <div class="private" rel="yui:property" resource="#property_storage">
+                                    <h4><a name="property_storage" property="yui:name">storage</a>
+                                        - <code>private <span property="yui:type">object</span></code>
+                                    </h4>
+                                    <div class="detail">
+                                        <div class="description" property="yui:description">
+                                            <div class="base64-encoded">PHA+U3RvcmFnZSBpbnN0YW5jZTwvcD4=</div>
+                                        </div>
+                                    </div>
+     
+                                        
+                                    <div class="default" property="yui:defaultValue">
+                                        Default Value: null
+                                    </div>        
+
+
+                                    <hr />
+                                    </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div rel="yui:methods" resource="#methods">
+                        <div class="section method details">
+                            <h3 id="methods">Methods</h3>
+                            <div class="content">
+                                    <div class="private" rel="yui:method" resource="#method_addCacheData">
+                                    <h4>
+                                        <a name="method_addCacheData">addCacheData</a></h4>
+                                    <div class="detail" >
+                                        <code>
+                                         private 
+                                        
+                                        
+                                        void
+                                            <strong property="yui:name">addCacheData</strong>
+                                           (
+                                                
+                                                        
+                                                         o
+                                                    
+                                                
+                                                        , 
+                                                         args
+                                                    
+                                                
+                                            )
+                                        </code>
+                                        
+                                        <div class="description" property="yui:description">
+                                            <div class="base64-encoded">PHA+UHJlcGVuZHMgY2FjaGUgZGF0YSB0byBhbiBhcmd1bWVudHMgYXJyYXk8L3A+</div>
+                                        </div>
+
+                                        <div class="description">
+
+                                                <dl rel="yui:parameters">
+                                                    <dt>Parameters:</dt>
+                                                        <dd rel="yui:parameter">
+                                                        <code><span property="yui:name">o</span>
+                                                        &lt;<span property="yui:type">object</span>&gt;
+                                                        </code>
+                                                        <span property="yui:description"></span>
+                                                        </dd>
+                                                        <dd rel="yui:parameter">
+                                                        <code><span property="yui:name">args</span>
+                                                        &lt;<span property="yui:type">array|object</span>&gt;
+                                                        </code>
+                                                        <span property="yui:description"></span>
+                                                        </dd>
+                                                </dl>
+
+
+
+             
+
+                                        </div>
+
+                                    </div>
+                                    <hr />
+                                    </div>
+                                    <div class="private" rel="yui:method" resource="#method_cacheClientMethods">
+                                    <h4>
+                                        <a name="method_cacheClientMethods">cacheClientMethods</a></h4>
+                                    <div class="detail" >
+                                        <code>
+                                         private 
+                                        
+                                        
+                                        void
+                                            <strong property="yui:name">cacheClientMethods</strong>
+                                           (
+                                                
+                                                        
+                                                         client
+                                                    
+                                                
+                                                        , 
+                                                         *methods
+                                                    
+                                                
+                                            )
+                                        </code>
+                                        
+                                        <div class="description" property="yui:description">
+                                            <div class="base64-encoded">PHA+U2V0cyB0aGUgbWV0aG9kIHVzZWQgaW4gdGhlIGRyaXZlciB0aGF0IHdpbGwgYmUgdXNlZAogIGluIGNhY2hlIG9wZXJhdGlvbnMuPC9wPgoKPHA+ICBUaGVzZSBtZXRob2RzIGFyZSB0aGUgb25lcyB1c2VkIGluIGFsbCB0aGUgb3BlcmF0aW9ucwogIHBlcmZvcm1lZCBieSB0aGUgZHJpdmVyIGl0c2VsZi48L3A+Cgo8cD4gIFRoZSBtZXRob2RzIHNob3VsZCBiZSBzZXBhcmF0ZWQgYnkgY29tbWFzLjwvcD4=</div>
+                                        </div>
+
+                                        <div class="description">
+
+                                                <dl rel="yui:parameters">
+                                                    <dt>Parameters:</dt>
+                                                        <dd rel="yui:parameter">
+                                                        <code><span property="yui:name">client</span>
+                                                        &lt;<span property="yui:type">object</span>&gt;
+                                                        </code>
+                                                        <span property="yui:description"></span>
+                                                        </dd>
+                                                        <dd rel="yui:parameter">
+                                                        <code><span property="yui:name">*methods</span>
+                                                        &lt;<span property="yui:type">string</span>&gt;
+                                                        </code>
+                                                        <span property="yui:description"></span>
+                                                        </dd>
+                                                </dl>
+
+
+
+             
+
+                                        </div>
+
+                                    </div>
+                                    <hr />
+                                    </div>
+                                    <div class="" rel="yui:method" resource="#method_multi">
+                                    <h4>
+                                        <a name="method_multi">multi</a></h4>
+                                    <div class="detail" >
+                                        <code>
+                                        
+                                        
+                                        
+                                        void
+                                            <strong property="yui:name">multi</strong>
+                                           (
+                                                
+                                                        
+                                                         context
+                                                    
+                                                
+                                                        , 
+                                                         config
+                                                    
+                                                
+                                            )
+                                        </code>
+                                        
+                                        <div class="description" property="yui:description">
+                                            <div class="base64-encoded">PHA+TXVsdGkgc3VwcG9ydC48L3A+</div>
+                                        </div>
+
+                                        <div class="description">
+
+                                                <dl rel="yui:parameters">
+                                                    <dt>Parameters:</dt>
+                                                        <dd rel="yui:parameter">
+                                                        <code><span property="yui:name">context</span>
+                                                        &lt;<span property="yui:type">object</span>&gt;
+                                                        </code>
+                                                        <span property="yui:description"></span>
+                                                        </dd>
+                                                        <dd rel="yui:parameter">
+                                                        <code><span property="yui:name">config</span>
+                                                        &lt;<span property="yui:type">object</span>&gt;
+                                                        </code>
+                                                        <span property="yui:description"></span>
+                                                        </dd>
+                                                </dl>
+
+
+
+             
+
+                                        </div>
+
+                                    </div>
+                                    <hr />
+                                    </div>
+                                    <div class="private" rel="yui:method" resource="#method_provideTo">
+                                    <h4>
+                                        <a name="method_provideTo">provideTo</a></h4>
+                                    <div class="detail" >
+                                        <code>
+                                         private 
+                                        
+                                        
+                                        void
+                                            <strong property="yui:name">provideTo</strong>
+                                           (
+                                                
+                                                        
+                                                         context
+                                                    
+                                                
+                                            )
+                                        </code>
+                                        
+                                        <div class="description" property="yui:description">
+                                            <div class="base64-encoded">PHA+UHJvdmlkZXMgdGhlIE1vZGVsIEhvb2tzIHRvIGEgc3BlY2lmaWMgbW9kZWwgb2JqZWN0PC9wPg==</div>
+                                        </div>
+
+                                        <div class="description">
+
+                                                <dl rel="yui:parameters">
+                                                    <dt>Parameters:</dt>
+                                                        <dd rel="yui:parameter">
+                                                        <code><span property="yui:name">context</span>
+                                                        &lt;<span property="yui:type">object</span>&gt;
+                                                        </code>
+                                                        <span property="yui:description"></span>
+                                                        </dd>
+                                                </dl>
+
+
+
+             
+
+                                        </div>
+
+                                    </div>
+                                    <hr />
+                                    </div>
+                                    <div class="private" rel="yui:method" resource="#method_setCachePrefix">
+                                    <h4>
+                                        <a name="method_setCachePrefix">setCachePrefix</a></h4>
+                                    <div class="detail" >
+                                        <code>
+                                         private 
+                                        
+                                        
+                                        void
+                                            <strong property="yui:name">setCachePrefix</strong>
+                                           (
+                                                
+                                                        
+                                                         prefix
+                                                    
+                                                
+                                            )
+                                        </code>
+                                        
+                                        <div class="description" property="yui:description">
+                                            <div class="base64-encoded">PHA+U2V0cyB0aGUgY2FjaGUgcHJlZml4PC9wPg==</div>
+                                        </div>
+
+                                        <div class="description">
+
+                                                <dl rel="yui:parameters">
+                                                    <dt>Parameters:</dt>
+                                                        <dd rel="yui:parameter">
+                                                        <code><span property="yui:name">prefix</span>
+                                                        &lt;<span property="yui:type">string</span>&gt;
+                                                        </code>
+                                                        <span property="yui:description"></span>
+                                                        </dd>
+                                                </dl>
+
+
+
+             
+
+                                        </div>
+
+                                    </div>
+                                    <hr />
+                                    </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div rel="yui:events" resource="#events">
+
+
+                    </div>
+
+                    <div rel="yui:attributes" resource="#configattributes">
+
+                    </div>
+
+			</div>
+		</div>
+		<div class="yui-b">
+            <div class="nav">
+
+                    <div id="moduleList" class="module">
+                        <h4>Modules</h4>
+                        <ul class="content">
+                                <li class=""><a href="module_drivers.html" title="drivers">drivers</a></li>
+                                <li class=""><a href="module_engines.html" title="engines">engines</a></li>
+                                <li class="selected"><a href="module_lib.html" title="lib">lib</a></li>
+                                <li class=""><a href="module_storages.html" title="storages">storages</a></li>
+                        </ul>
+                    </div>
+
+                    <div id="classList" class="module">
+                        <h4>Classes</h4>
+                        <ul class="content">
+                                <li class=""><a href="Application.html" title="Application">Application</a></li>
+                                <li class=""><a href="Controller.html" title="Controller">Controller</a></li>
+                                <li class="selected"><a href="Driver.html" title="Driver">Driver</a></li>
+                                <li class=""><a href="Engine.html" title="Engine">Engine</a></li>
+                                <li class=""><a href="Helper.html" title="Helper">Helper</a></li>
+                                <li class=""><a href="http.IncomingMessage.html" title="http.IncomingMessage">http.IncomingMessage</a></li>
+                                <li class=""><a href="http.OutgoingMessage.html" title="http.OutgoingMessage">http.OutgoingMessage</a></li>
+                                <li class=""><a href="Model.html" title="Model">Model</a></li>
+                                <li class=""><a href="ModelObject.html" title="ModelObject">ModelObject</a></li>
+                                <li class=""><a href="Protos.html" title="Protos">Protos</a></li>
+                                <li class=""><a href="Storage.html" title="Storage">Storage</a></li>
+                                <li class=""><a href="Utility.html" title="Utility">Utility</a></li>
+                        </ul>
+                    </div>
+
+                    <div id="fileList" class="module">
+                        <h4>Files</h4>
+                        <ul class="content">        
+                                <li class=""><a href="application.js.html" title="application.js">application.js</a></li>
+                                <li class=""><a href="command.js.html" title="command.js">command.js</a></li>
+                                <li class=""><a href="controller.js.html" title="controller.js">controller.js</a></li>
+                                <li class=""><a href="driver.js.html" title="driver.js">driver.js</a></li>
+                                <li class=""><a href="engine.js.html" title="engine.js">engine.js</a></li>
+                                <li class=""><a href="extensions.js.html" title="extensions.js">extensions.js</a></li>
+                                <li class=""><a href="helper.js.html" title="helper.js">helper.js</a></li>
+                                <li class=""><a href="model.js.html" title="model.js">model.js</a></li>
+                                <li class=""><a href="protos.js.html" title="protos.js">protos.js</a></li>
+                                <li class=""><a href="regex.js.html" title="regex.js">regex.js</a></li>
+                                <li class=""><a href="request.js.html" title="request.js">request.js</a></li>
+                                <li class=""><a href="response.js.html" title="response.js">response.js</a></li>
+                                <li class=""><a href="storage.js.html" title="storage.js">storage.js</a></li>
+                                <li class=""><a href="utility.js.html" title="utility.js">utility.js</a></li>
+                        </ul>
+                    </div>
+
+                    <div id="propertyList" class="module">
+                        <h4>Properties</h4>
+                        <ul class="content">        
+                                <li class="private"><a href="#property___modelMethods" title="__modelMethods">__modelMethods</a></li>
+                                <li class="private"><a href="#property_cacheKeys" title="cacheKeys">cacheKeys</a></li>
+                                <li class="private"><a href="#property_maxCacheTimeout" title="maxCacheTimeout">maxCacheTimeout</a></li>
+                                <li class="private"><a href="#property_storage" title="storage">storage</a></li>
+                        </ul>
+                    </div>
+
+                    <div id="methodsList" class="module">
+                        <h4>Methods</h4>
+                        <ul class="content">        
+                                <li class="private"><a href="#method_addCacheData" title="addCacheData">addCacheData</a></li>
+                                <li class="private"><a href="#method_cacheClientMethods" title="cacheClientMethods">cacheClientMethods</a></li>
+                                <li class=""><a href="#method_multi" title="multi">multi</a></li>
+                                <li class="private"><a href="#method_provideTo" title="provideTo">provideTo</a></li>
+                                <li class="private"><a href="#method_setCachePrefix" title="setCachePrefix">setCachePrefix</a></li>
+                        </ul>
+                    </div>
+
+
+
+            </div>
+		</div>
+	</div>
+	<div id="ft">
+        <hr />
+        Copyright &copy; 2012 <a href="https://github.com/derdesign">Ernesto M&eacute;ndez</a>. All rights reserved.
+	</div>
+</div>
+<script type="text/javascript">
+
+    var ALL_YUI_PROPS = [{"url": "Driver.html#method_addCacheData", "access": "private", "host": "Driver", "type": "method", "name": "addCacheData"}, {"url": "Application.html#method_addClientResource", "access": "", "host": "Application", "type": "method", "name": "addClientResource"}, {"url": "Application.html#method_addClientScript", "access": "", "host": "Application", "type": "method", "name": "addClientScript"}, {"url": "Application.html#method_addClientStylesheet", "access": "", "host": "Application", "type": "method", "name": "addClientStylesheet"}, {"url": "Application.html#method_addFilter", "access": "", "host": "Application", "type": "method", "name": "addFilter"}, {"url": "Application.html#method_applyFilters", "access": "", "host": "Application", "type": "method", "name": "applyFilters"}, {"url": "Application.html#property_asyncQueue", "access": "private", "host": "Application", "type": "property", "name": "asyncQueue"}, {"url": "Controller.html#method_authFilter", "access": "", "host": "Controller", "type": "method", "name": "authFilter"}, {"url": "Controller.html#property_authRequired", "access": "", "host": "Controller", "type": "property", "name": "authRequired"}, {"url": "Application.html#property_baseUrl", "access": "", "host": "Application", "type": "property", "name": "baseUrl"}, {"url": "Application.html#method__buildPartialView", "access": "private", "host": "Application", "type": "method", "name": "_buildPartialView"}, {"url": "Driver.html#method_cacheClientMethods", "access": "private", "host": "Driver", "type": "method", "name": "cacheClientMethods"}, {"url": "Driver.html#property_cacheKeys", "access": "private", "host": "Driver", "type": "property", "name": "cacheKeys"}, {"url": "Application.html#property_className", "access": "private", "host": "Application", "type": "property", "name": "className"}, {"url": "Application.html#property_client", "access": "private", "host": "Application", "type": "property", "name": "client"}, {"url": "Application.html#method_clientRequest", "access": "", "host": "Application", "type": "method", "name": "clientRequest"}, {"url": "Application.html#property_config", "access": "", "host": "Application", "type": "property", "name": "config"}, {"url": "Application.html#property_controller", "access": "private", "host": "Application", "type": "property", "name": "controller"}, {"url": "Application.html#property_controllers", "access": "private", "host": "Application", "type": "property", "name": "controllers"}, {"url": "Application.html#method_createHash", "access": "", "host": "Application", "type": "method", "name": "createHash"}, {"url": "Application.html#method_curl", "access": "", "host": "Application", "type": "method", "name": "curl"}, {"url": "Application.html#method_date", "access": "private", "host": "Application", "type": "method", "name": "date"}, {"url": "Application.html#method_debug", "access": "", "host": "Application", "type": "method", "name": "debug"}, {"url": "Application.html#property_debugColor", "access": "private", "host": "Application", "type": "property", "name": "debugColor"}, {"url": "Application.html#property_debugLog", "access": "", "host": "Application", "type": "property", "name": "debugLog"}, {"url": "Application.html#method__detectAjax", "access": "private", "host": "Application", "type": "method", "name": "_detectAjax"}, {"url": "Application.html#property_domain", "access": "private", "host": "Application", "type": "property", "name": "domain"}, {"url": "Application.html#method__driver", "access": "private", "host": "Application", "type": "method", "name": "_driver"}, {"url": "Application.html#property_drivers", "access": "private", "host": "Application", "type": "property", "name": "drivers"}, {"url": "Application.html#property_engines", "access": "private", "host": "Application", "type": "property", "name": "engines"}, {"url": "Controller.html#method_exec", "access": "private", "host": "Controller", "type": "method", "name": "exec"}, {"url": "Application.html#property___filters", "access": "private", "host": "Application", "type": "property", "name": "__filters"}, {"url": "Application.html#method_fullPath", "access": "", "host": "Application", "type": "method", "name": "fullPath"}, {"url": "Controller.html#method_getAlias", "access": "", "host": "Controller", "type": "method", "name": "getAlias"}, {"url": "Application.html#method_getClientResource", "access": "", "host": "Application", "type": "method", "name": "getClientResource"}, {"url": "Controller.html#method_getControllerByAlias", "access": "", "host": "Controller", "type": "method", "name": "getControllerByAlias"}, {"url": "Controller.html#method_getQueryData", "access": "", "host": "Controller", "type": "method", "name": "getQueryData"}, {"url": "Application.html#method__getResource", "access": "private", "host": "Application", "type": "method", "name": "_getResource"}, {"url": "Application.html#property_globals", "access": "", "host": "Application", "type": "property", "name": "globals"}, {"url": "Application.html#property_helpers", "access": "private", "host": "Application", "type": "property", "name": "helpers"}, {"url": "Application.html#method_home", "access": "", "host": "Application", "type": "method", "name": "home"}, {"url": "Application.html#property_httpMethods", "access": "private", "host": "Application", "type": "property", "name": "httpMethods"}, {"url": "Application.html#property_httpStatusCodes", "access": "private", "host": "Application", "type": "property", "name": "httpStatusCodes"}, {"url": "Application.html#method_initialize", "access": "private", "host": "Application", "type": "method", "name": "initialize"}, {"url": "Application.html#property_initialized", "access": "private", "host": "Application", "type": "property", "name": "initialized"}, {"url": "Application.html#method_libExtensions", "access": "", "host": "Application", "type": "method", "name": "libExtensions"}, {"url": "Application.html#method_log", "access": "", "host": "Application", "type": "method", "name": "log"}, {"url": "Application.html#method_logFormat", "access": "", "host": "Application", "type": "method", "name": "logFormat"}, {"url": "Application.html#property_logging", "access": "", "host": "Application", "type": "property", "name": "logging"}, {"url": "Application.html#method_login", "access": "", "host": "Application", "type": "method", "name": "login"}, {"url": "Application.html#property_loginUrl", "access": "", "host": "Application", "type": "property", "name": "loginUrl"}, {"url": "Driver.html#property_maxCacheTimeout", "access": "private", "host": "Driver", "type": "property", "name": "maxCacheTimeout"}, {"url": "Application.html#method_md5", "access": "", "host": "Application", "type": "method", "name": "md5"}, {"url": "Application.html#property_model", "access": "", "host": "Application", "type": "property", "name": "model"}, {"url": "Driver.html#property___modelMethods", "access": "private", "host": "Driver", "type": "property", "name": "__modelMethods"}, {"url": "Application.html#property_models", "access": "private", "host": "Application", "type": "property", "name": "models"}, {"url": "Driver.html#method_multi", "access": "", "host": "Driver", "type": "method", "name": "multi"}, {"url": "Application.html#property_mvcpath", "access": "private", "host": "Application", "type": "property", "name": "mvcpath"}, {"url": "Application.html#method_notFound", "access": "", "host": "Application", "type": "method", "name": "notFound"}, {"url": "Application.html#method_oninitialize", "access": "", "host": "Application", "type": "method", "name": "oninitialize"}, {"url": "Application.html#property_path", "access": "private", "host": "Application", "type": "property", "name": "path"}, {"url": "Application.html#property_paths", "access": "private", "host": "Application", "type": "property", "name": "paths"}, {"url": "Controller.html#method_prepare", "access": "private", "host": "Controller", "type": "method", "name": "prepare"}, {"url": "Controller.html#method_processRoute", "access": "private", "host": "Controller", "type": "method", "name": "processRoute"}, {"url": "Driver.html#method_provideTo", "access": "private", "host": "Driver", "type": "method", "name": "provideTo"}, {"url": "Application.html#property_regex", "access": "", "host": "Application", "type": "property", "name": "regex"}, {"url": "Application.html#method_registerViewHelper", "access": "private", "host": "Application", "type": "method", "name": "registerViewHelper"}, {"url": "Application.html#method_relPath", "access": "", "host": "Application", "type": "method", "name": "relPath"}, {"url": "Application.html#method_require", "access": "", "host": "Application", "type": "method", "name": "require"}, {"url": "Application.html#property_resources", "access": "private", "host": "Application", "type": "property", "name": "resources"}, {"url": "Application.html#method_routeRequest", "access": "private", "host": "Application", "type": "method", "name": "routeRequest"}, {"url": "Application.html#property_routes", "access": "private", "host": "Application", "type": "property", "name": "routes"}, {"url": "Controller.html#method_runAuthFilters", "access": "private", "host": "Controller", "type": "method", "name": "runAuthFilters"}, {"url": "Application.html#property_server", "access": "private", "host": "Application", "type": "property", "name": "server"}, {"url": "Application.html#method_serverError", "access": "", "host": "Application", "type": "method", "name": "serverError"}, {"url": "Driver.html#method_setCachePrefix", "access": "private", "host": "Driver", "type": "method", "name": "setCachePrefix"}, {"url": "Application.html#method__staticViewExists", "access": "private", "host": "Application", "type": "method", "name": "_staticViewExists"}, {"url": "Application.html#method__storage", "access": "private", "host": "Application", "type": "method", "name": "_storage"}, {"url": "Driver.html#property_storage", "access": "private", "host": "Driver", "type": "property", "name": "storage"}, {"url": "Application.html#property_storages", "access": "private", "host": "Application", "type": "property", "name": "storages"}, {"url": "Application.html#property_supports", "access": "private", "host": "Application", "type": "property", "name": "supports"}, {"url": "Application.html#method_url", "access": "", "host": "Application", "type": "method", "name": "url"}, {"url": "Application.html#method_use", "access": "", "host": "Application", "type": "method", "name": "use"}, {"url": "Application.html#method_validate", "access": "private", "host": "Application", "type": "method", "name": "validate"}, {"url": "Application.html#property_viewCaching", "access": "", "host": "Application", "type": "property", "name": "viewCaching"}, {"url": "Application.html#property_views", "access": "private", "host": "Application", "type": "property", "name": "views"}];
+</script>
+</body>
+</html>

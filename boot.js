@@ -26,11 +26,11 @@ Protos.bootstrap(__dirname, {
       
       // Development Logging
       app.use('logger', {
-        accessLog: true,
+        accessLog: false,
         accessLogFormat: 'default',
-        accessLogConsole: true,
-        infoLevel: {console: true},
-        errorLevel: {console: true}
+        accessLogConsole: false,
+        infoLevel: {console: false},
+        errorLevel: {console: false}
       });
       
     },

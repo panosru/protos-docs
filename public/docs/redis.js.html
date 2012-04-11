@@ -1,0 +1,447 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html xmlns:yui="http://yuilibrary.com/rdf/1.0/yui.rdf#">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>API: storages   redis.js  (Protos Web Framework)</title>
+
+  <link rel="stylesheet" type="text/css" href="assets/reset-fonts-grids-min.css" />
+  <link rel="stylesheet" type="text/css" href="assets/api.css" />
+  <link type="text/css" rel="stylesheet" href="assets/sh/styles/shCoreDefault.css" />
+  <link type="text/css" rel="stylesheet" href="assets/client.css" />
+
+  <script type="text/javascript" src="assets/api-js"></script>
+  <script type="text/javascript" src="assets/ac-js"></script>
+
+  <script type="text/javascript" src="assets/jquery-1.7.1.js"></script>
+  <script type="text/javascript" src="assets/jquery.base64.js"></script>
+  <script type="text/javascript" src="assets/sh/scripts/shCore.js"></script>
+  <script type="text/javascript" src="assets/sh/scripts/shBrushJScript.js"></script>
+  <script type="text/javascript" src="assets/client.js"></script>
+
+</head>
+
+<body id="yahoo-com">
+
+<div id="doc3" class="yui-t2">
+	<div id="hd">
+        <h1><a href="http://derdesign.github.com/protos" title="Protos Web Framework">Protos Web Framework</a></h1>
+        <h3>storages&nbsp; <span class="subtitle">0.0.4</span></h3>
+        <a href="./index.html" title="Protos Web Framework">Protos Web Framework</a> 
+            &gt; <a href="./module_storages.html" title="storages">storages</a>
+                
+                 &gt; redis.js (source view) 
+        <form onsubmit="return false">
+            <div id="propertysearch">
+                Search: <input autocomplete="off" id="searchinput" />
+                <div id="searchresults">
+                    &nbsp;
+                </div>
+            </div>
+        </form>
+	</div>
+
+	<div id="bd">
+		<div id="yui-main">
+			<div class="yui-b">
+            <form action="#" name="yui-classopts-form" method="get" id="yui-classopts-form">
+                <fieldset>
+                    <legend>Filters</legend>
+                <span class="classopts"><input type="checkbox" name="show_private" id="show_private" /> <label for="show_private">Show Private</label></span>
+                <span class="classopts"><input type="checkbox" name="show_protected" id="show_protected" /> <label for="show_protected">Show Protected</label></span>
+                <span class="classopts"><input type="checkbox" name="show_deprecated" id="show_deprecated" /> <label for="show_deprecated">Show Deprecated</label></span>
+                </fieldset>
+            </form>
+
+                    <div id="srcout">
+                        <style>
+                            #doc3 .classopts { display:none; }
+                        </style>
+                        <div class="highlight"><pre><pre class="brush: js">
+/**
+  @module storages
+  @namespace storage
+ */
+
+var _ = require('underscore'),
+    redis = require('redis'),
+    util = require('util');
+
+/**
+  Redis Storage class
+  
+  @class RedisStorage
+  @extends Storage
+  @constructor
+  @param {object} app Application instance
+  @param {object} config Storage configuration
+ */
+
+function RedisStorage(app, config) {
+  
+   var self = this;
+   
+   config = config || {};
+   config.host = config.host || 'localhost';
+   config.port = config.port || 6379;
+   
+   /**
+    Application instance
+    
+    @private
+    @property app
+    @type Application
+   */
+   
+   this.app = app;
+   
+   /**
+    Redis database
+    
+    @private
+    @property db
+    @type integer
+    @default 0
+   */
+   
+   this.db = 0;
+   
+   /**
+    Storage configuration
+    
+      config = { 
+        host: 'localhost',
+        port: 6379,
+        db: 1,
+        pass: 'password'
+      }
+    
+    @property config
+    @type object
+    */
+    
+   this.config = config;
+   
+   /**
+    Class name
+    
+    @private
+    @property className
+    @type string
+   */
+   
+   this.className = this.constructor.name;
+   
+   protos.async(app); // Register async queue
+   
+   protos.util.checkPort(config.port, function(err) {
+     
+     protos.done(app); // Flush async queue
+     
+     if (err) {
+       app.log(util.format("Redis [%s:%s] %s", config.host, config.port, err.code));
+       self.client = err;
+     } else {
+       // Set redis client
+       self.client = redis.createClient(config.port, config.host, self.options);
+
+       // Authenticate if password provided
+       if (typeof config.pass == 'string') {
+         self.client.auth(config.pass, function(err, res) {
+           if (err) throw err;
+         });
+       }
+
+       // Handle error event
+       self.client.on('error', function(err) {
+         app.log(err);
+       });
+
+       // Select db if specified
+       if (typeof config.db == 'number' && config.db !== 0) {
+         self.db = config.db;
+         self.client.select(config.db, function(err, res) {
+           if (err) throw err;
+         });
+       }
+     }
+   });
+   
+   // Set enumerable properties
+   protos.util.onlySetEnumerable(this, ['className', 'db']);
+}
+
+util.inherits(RedisStorage, protos.lib.storage);
+
+RedisStorage.prototype.options = {};
+
+
+/* Storage API get */
+
+RedisStorage.prototype.get = function(key, callback) {
+  var self = this;
+  
+  // If key is a string
+  if (typeof key == 'string') {
+    
+    this.client.get(key, function(err, data) {
+      if (err) callback.call(self, err, null);
+      else {
+        callback.call(self, null, data);
+      }
+    });
+    
+  // If key is an array
+  } else if (util.isArray(key)) {
+    
+    var i, out = {}, keys = key, 
+        multi = this.client.multi();
+        
+    for (i=0; i < keys.length; i++) {
+      multi.get(keys[i]);
+    }
+    
+    multi.exec(function(err, data) {
+      if (err) callback.call(self, err, null);
+      else {
+        for (i=0; i < keys.length; i++) {
+          out[keys[i]] = data[i];
+        }
+        callback.call(self, null, out);
+      }
+    });
+  }
+}
+
+/* Storage API getHash */
+
+RedisStorage.prototype.getHash = function(key, callback) {
+  var self = this;
+  this.client.hgetall(key, function(err, data) {
+    if (err) callback.call(self, err, null);
+    else {
+      callback.call(self, null, data);
+    }
+  });
+}
+
+/* Storage API set */
+
+RedisStorage.prototype.set = function(key, value, callback) {
+  var self = this;
+  
+  // If key is a string
+  if (typeof key == 'string') {
+    
+    // Set single value
+    this.client.set(key, value, function(err, data) {
+      if (err) callback.call(self, err);
+      else {
+        callback.call(self, null);
+      }
+    });
+    
+  // If key is an array
+  } else if (typeof key == 'object') {
+    
+    // Set multiple values
+    var object = key,
+        multi = this.client.multi();
+    
+    callback = value;
+        
+    for (var x in object) {
+      multi.set(x, object[x]);
+    }
+    
+    multi.exec(function(err, data) {
+      if (err) callback.call(self, err);
+      else {
+        callback.call(self, null);
+      }
+    });
+    
+  }
+}
+
+/* Storage API setHash */
+
+RedisStorage.prototype.setHash = function(key, object, callback) {
+  var self = this;
+  this.client.hmset(key, object, function(err, data) {
+    if (err) callback.call(self, err);
+    else {
+      callback.call(self, null);
+    }
+  });
+}
+
+/* Storage API updateHash */
+
+RedisStorage.prototype.updateHash = function(key, object, callback) {
+  var self = this,
+      args = [key];
+      
+  for (var x in object) {
+    args.push(x);
+    args.push(object[x]);
+  }
+  
+  args.push(function(err, results) {
+    callback.call(self, err);
+  });
+  
+  this.client.hmset.apply(this.client, args);
+}
+
+/* Storage API deleteFromHash */
+
+RedisStorage.prototype.deleteFromHash = function(hash, key, callback) {
+  var self = this;
+  this.client.hdel(hash, key, function(err, result) {
+    callback.call(self, err);
+  });
+}
+
+/* Storage API delete */
+
+RedisStorage.prototype.delete = function(key, callback) {
+  var self = this;
+  
+  // If key is a string
+  if (typeof key == 'string') {
+    
+    this.client.del(key, function(err, data) {
+      if (err) callback.call(self, err);
+      else {
+        callback.call(self, null);
+      }
+    });
+    
+  // If key is an array
+  } else if (util.isArray(key)) {
+    var i, keys = key,
+        multi = this.client.multi();
+        
+    for (i=0; i < keys.length; i++) {
+      multi.del(keys[i]);
+    }
+    
+    multi.exec(function(err, data) {
+      if (err) callback.call(self, err);
+      else {
+        callback.call(self, null);
+      }
+    });
+    
+  }
+}
+
+/* Storage API rename */
+
+RedisStorage.prototype.rename = function(oldkey, newkey, callback) {
+  var self = this;
+  this.client.rename(oldkey, newkey, function(err, result) {
+    callback.call(self, err);
+  });
+}
+
+/* Storage API expire */
+
+RedisStorage.prototype.expire = function(key, timeout, callback) {
+  var self = this;
+  this.client.expire(key, timeout, function(err, result) {
+    callback.call(self, err);
+  });
+}
+
+/* Storage API incr */
+
+RedisStorage.prototype.incr = function(key, callback) {
+  var self = this;
+  this.client.incr(key, function(err, current) {
+    callback.call(self, err);
+  });
+}
+
+/* Storage API incrBy */
+
+RedisStorage.prototype.incrBy = function(key, value, callback) {
+  var self = this;
+  this.client.incrby(key, value, function(err, current) {
+    callback.call(self, err);
+  });
+}
+
+
+/* Storage API decr */
+
+RedisStorage.prototype.decr = function(key, callback) {
+  var self = this;
+  this.client.decr(key, function(err, current) {
+    callback.call(self, err);
+  });
+}
+
+/* Storage API decrBy */
+
+RedisStorage.prototype.decrBy = function(key, value, callback) {
+  var self = this;
+  this.client.decrby(key, value, function(err, current) {
+    callback.call(self, err);
+  });
+}
+
+module.exports = RedisStorage;
+</pre><!-- .brush: js -->
+</div>
+
+                    </div>
+			</div>
+		</div>
+		<div class="yui-b">
+            <div class="nav">
+
+                    <div id="moduleList" class="module">
+                        <h4>Modules</h4>
+                        <ul class="content">
+                                <li class=""><a href="module_drivers.html" title="drivers">drivers</a></li>
+                                <li class=""><a href="module_engines.html" title="engines">engines</a></li>
+                                <li class=""><a href="module_lib.html" title="lib">lib</a></li>
+                                <li class="selected"><a href="module_storages.html" title="storages">storages</a></li>
+                        </ul>
+                    </div>
+
+                    <div id="classList" class="module">
+                        <h4>Classes</h4>
+                        <ul class="content">
+                                <li class=""><a href="storage.MongoStorage.html" title="storage.MongoStorage">storage.MongoStorage</a></li>
+                                <li class=""><a href="storage.RedisStorage.html" title="storage.RedisStorage">storage.RedisStorage</a></li>
+                        </ul>
+                    </div>
+
+                    <div id="fileList" class="module">
+                        <h4>Files</h4>
+                        <ul class="content">        
+                                <li class=""><a href="mongodb.js.html" title="mongodb.js">mongodb.js</a></li>
+                                <li class="selected"><a href="redis.js.html" title="redis.js">redis.js</a></li>
+                        </ul>
+                    </div>
+
+
+
+
+
+            </div>
+		</div>
+	</div>
+	<div id="ft">
+        <hr />
+        Copyright &copy; 2012 <a href="https://github.com/derdesign">Ernesto M&eacute;ndez</a>. All rights reserved.
+	</div>
+</div>
+<script type="text/javascript">
+
+    var ALL_YUI_PROPS = [{"url": "storage.MongoStorage.html#property_app", "access": "private", "host": "storage.MongoStorage", "type": "property", "name": "app"}, {"url": "storage.RedisStorage.html#property_app", "access": "private", "host": "storage.RedisStorage", "type": "property", "name": "app"}, {"url": "storage.MongoStorage.html#property_className", "access": "private", "host": "storage.MongoStorage", "type": "property", "name": "className"}, {"url": "storage.RedisStorage.html#property_className", "access": "private", "host": "storage.RedisStorage", "type": "property", "name": "className"}, {"url": "storage.MongoStorage.html#property_config", "access": "", "host": "storage.MongoStorage", "type": "property", "name": "config"}, {"url": "storage.RedisStorage.html#property_config", "access": "", "host": "storage.RedisStorage", "type": "property", "name": "config"}, {"url": "storage.RedisStorage.html#property_db", "access": "private", "host": "storage.RedisStorage", "type": "property", "name": "db"}];
+</script>
+</body>
+</html>

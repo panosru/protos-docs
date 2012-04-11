@@ -1,0 +1,1887 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html xmlns:yui="http://yuilibrary.com/rdf/1.0/yui.rdf#">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>API: lib   application.js  (Protos Web Framework)</title>
+
+  <link rel="stylesheet" type="text/css" href="assets/reset-fonts-grids-min.css" />
+  <link rel="stylesheet" type="text/css" href="assets/api.css" />
+  <link type="text/css" rel="stylesheet" href="assets/sh/styles/shCoreDefault.css" />
+  <link type="text/css" rel="stylesheet" href="assets/client.css" />
+
+  <script type="text/javascript" src="assets/api-js"></script>
+  <script type="text/javascript" src="assets/ac-js"></script>
+
+  <script type="text/javascript" src="assets/jquery-1.7.1.js"></script>
+  <script type="text/javascript" src="assets/jquery.base64.js"></script>
+  <script type="text/javascript" src="assets/sh/scripts/shCore.js"></script>
+  <script type="text/javascript" src="assets/sh/scripts/shBrushJScript.js"></script>
+  <script type="text/javascript" src="assets/client.js"></script>
+
+</head>
+
+<body id="yahoo-com">
+
+<div id="doc3" class="yui-t2">
+	<div id="hd">
+        <h1><a href="http://derdesign.github.com/protos" title="Protos Web Framework">Protos Web Framework</a></h1>
+        <h3>lib&nbsp; <span class="subtitle">0.0.4</span></h3>
+        <a href="./index.html" title="Protos Web Framework">Protos Web Framework</a> 
+            &gt; <a href="./module_lib.html" title="lib">lib</a>
+                
+                 &gt; application.js (source view) 
+        <form onsubmit="return false">
+            <div id="propertysearch">
+                Search: <input autocomplete="off" id="searchinput" />
+                <div id="searchresults">
+                    &nbsp;
+                </div>
+            </div>
+        </form>
+	</div>
+
+	<div id="bd">
+		<div id="yui-main">
+			<div class="yui-b">
+            <form action="#" name="yui-classopts-form" method="get" id="yui-classopts-form">
+                <fieldset>
+                    <legend>Filters</legend>
+                <span class="classopts"><input type="checkbox" name="show_private" id="show_private" /> <label for="show_private">Show Private</label></span>
+                <span class="classopts"><input type="checkbox" name="show_protected" id="show_protected" /> <label for="show_protected">Show Protected</label></span>
+                <span class="classopts"><input type="checkbox" name="show_deprecated" id="show_deprecated" /> <label for="show_deprecated">Show Deprecated</label></span>
+                </fieldset>
+            </form>
+
+                    <div id="srcout">
+                        <style>
+                            #doc3 .classopts { display:none; }
+                        </style>
+                        <div class="highlight"><pre><pre class="brush: js">
+/**
+  @module lib
+*/
+
+var _ = require('underscore'),
+    http = require('http'),
+    fileModule = require('file'),
+    pathModule = require('path'),
+    urlModule = require('url'),
+    crypto = require('crypto'),
+    qs = require('qs'),
+    fs = require('fs'),
+    vm = require('vm'),
+    cp = require('child_process'),
+    util = require('util'),
+    slice = Array.prototype.slice,
+    isEmpty = _.isEmpty,
+    Multi = require('multi'),
+    EventEmitter = require('events').EventEmitter;
+
+/**
+  Application class
+  
+  @class Application
+  @constructor
+  @param {string} domain
+  @param {string} path
+ */
+
+function Application(domain, path) {
+
+  protos.app = this;
+
+  var inflect = this.inflect = protos.inflect;
+
+  var listenPort, portStr, self = this;
+
+/**
+  Application`s FQDN
+  
+  @private
+  @property domain
+  @type string
+ */
+  this.domain = domain;
+  
+/**
+  Path where the application is located
+  
+  @private
+  @property path
+  @type string
+ */
+  this.path = path;
+  
+/**
+  Application`s Classname
+  
+  @private
+  @property className
+  @type string
+  @default Application
+ */
+  this.className = this.constructor.name;
+  
+/**
+  Asynchronous callback queue
+  
+  @private
+  @property asyncQueue
+ */
+  this.asyncQueue = [];
+
+/**
+  Boolean value indicating whether or not the application has initialized
+  
+  @private
+  @property initialized
+  @type boolean
+ */
+  this.initialized = false;
+
+/**
+  Directory to store the models, views, controllers & helpers
+  Defaults to skeleton root. Must start/end with a slash.
+  
+  @private
+  @property mvcpath
+ */
+  this.mvcpath = path + '/app/';
+
+/**
+  Application paths. These define where the several application files be stored
+  within the application directory structure.
+  
+  @private
+  @property paths
+ */
+  this.paths = {
+    layout: '__layout/',
+    restricted: '__restricted/',
+    static: '__static/',
+    public: 'public/',
+    upload: 'incoming/',
+  }
+
+/**
+  Contains the view data for the application
+  
+  - **static**: Static view paths
+  - **buffers**: Template sources
+  - **callbacks**: Rendered template functions
+  - **partials**: Rendered template partials
+  
+  @private
+  @property views
+  @type object
+ */
+  this.views = {
+    static: [],
+    buffers: {},
+    callbacks: {},
+    partials: {}
+  }
+
+/**
+  If set to true, the application will print log messages on stdout.
+  
+  @property logging
+  @type boolean
+  @default true
+ */
+  this.logging = true;
+  
+/**
+  If set to true, the application will print debug messages on stdout.
+  
+  @property debugLog
+  @type boolean
+  @default false
+ */
+  this.debugLog = false;
+  
+/**
+  If set to true, the application will cache the rendered views, to optimize performance.
+  
+  @property viewCaching
+  @type boolean
+  @default false
+ */
+  this.viewCaching = false;
+
+/**
+  Login URL to use when redirecting unauthenticated users.
+  
+  @property loginUrl
+  @type string
+  @default '/login'
+ */
+  this.loginUrl = '/login';
+
+/**
+  Debug color to use on the console
+  
+  @private
+  @property debugColor
+  @type string
+  @default '0;37' (light gray)
+ */
+  this.debugColor = '0;37';
+
+/**
+  Driver instances
+  
+  @private
+  @property drivers
+  @type object
+ */
+  this.drivers = {};
+  
+/**
+  Storage instances
+  
+  @private
+  @property storages
+  @type object
+ */
+  this.storages = {};
+  
+/**
+  Helper instances
+  
+  @private
+  @property helpers
+  @type object
+ */
+  this.helpers = {};
+  
+/**
+  Controller instances
+  
+  @private
+  @property controllers
+  @type object
+ */
+  this.controllers = {};
+  
+/**
+  Model method aliases
+  
+  @property model
+  @type object
+ */
+  this.model = {}; // Contains model method aliases
+  
+/**
+  Model instances
+  
+  @private
+  @property models
+  @type object
+ */
+  this.models = {}; // Contains model instances
+  
+/**
+  Engine instances
+  
+  @private
+  @property engines
+  @type object
+ */
+  this.engines = {};
+  
+  this.defaultEngine = null;
+  
+/**
+  Application Configuration
+  
+  @property config
+  @type object
+ */
+  this.config = {};
+  
+/**
+  Application globals. This is just a wrapper object to provide access to general
+  purpose variables through the application`s singleton.
+  
+  @property globals
+  @type object
+ */
+  this.globals = {};
+  
+/**
+  Application routes
+  
+  @private
+  @property routes
+  @type object
+ */
+  this.routes = {};
+
+/**
+  HTTP Methods
+  
+  @private
+  @property httpMethods
+  @type array
+ */
+  this.httpMethods = protos.httpMethods;
+  
+/**
+  HTTP Status Codes
+  
+  @private
+  @property httpStatusCodes
+  @type object
+ */
+  this.httpStatusCodes = http.STATUS_CODES;
+
+/**
+  Client side data
+  
+  @private
+  @property client
+  @type object
+ */
+  this.client = {
+    scripts: [],
+    stylesheets: []
+  }
+
+/**
+  Stores booleans with middleware support/availability information.
+  
+  This property is manipulated with middleware. Do not set any values manually.
+  
+  @private
+  @property supports
+  @type object
+ */
+  this.supports = {};
+
+/**
+  To be used by middleware to store objects
+  
+  @private
+  @property resources
+  @type object
+ */
+  this.resources = {};
+
+/**
+  Store filters
+  
+  @private
+  @property __filters
+  @type object
+ */
+  this.__filters = {};
+
+  // Attach configuration
+  this.config = parseConfig.call(this);
+
+/**
+  Regular expressions, extend protos`s
+  
+  @property regex
+  @type object
+ */
+  this.regex = _.extend(this.config.regex, protos.regex);
+
+  // Structure application`s baseUrl
+  listenPort = protos.config.server.listenPort;
+  portStr = listenPort !== 80 ? ":" + listenPort : '';
+  
+/**
+  Application`s baseUrl
+  
+  @property baseUrl
+  @type string
+ */
+  this.baseUrl = "http://" + this.domain + portStr;
+
+/**
+  Application`s Server
+  
+  @private
+  @property server
+  @type object
+ */
+  this.server = http.createServer(function(req, res) {
+    req.startTime = Date.now();
+    self.routeRequest(req, res);
+  });
+
+  // App early initialization event (available on environments)
+  protos.emit('pre_init', this);
+
+  // Get constructors from lib/
+  var requireCb;
+
+  // Get instances from helpers/
+  protos.util.requireAllTo(this.mvcpath + "helpers", this.helpers, function(Ctor) {
+    // Pseudo-inheritance: Copy helper prototype methods into MainHelper`s prototype.
+    // If util.inherits is used, it will replace any additions to the original prototype.
+    if (Ctor.name == 'MainHelper') protos.extend(Ctor.prototype, protos.lib.helper.prototype);
+    var instance = new Ctor(self);
+    instance.className = instance.constructor.name;
+    return instance;
+  });
+
+  for (var helper in this.helpers) {
+    if (typeof this.helpers[helper] == 'undefined') {
+      // Remove `undefined` helpers
+      delete this.helpers[helper];
+    } else {
+      // Make helpers more accessible. E.g.: app.mainHelper => app.helpers.main
+      this[inflect.camelize(helper+'-helper', true)] = this.helpers[helper];
+    }
+  }
+
+  this.emit('helpers_init');
+
+  // Create storages
+  createStorages.call(this);
+
+  this.emit('storages_init', this.storages);
+
+  // Create drivers
+  createDrivers.call(this);
+
+  this.emit('drivers_init', this.drivers);
+
+  // Get models/
+  var model, name, modelCtor = protos.lib.model;
+  if (Object.keys(this.config.database).length > 0) {
+    protos.util.requireAllTo(this.mvcpath + "models", this.models, function(Ctor) {
+      util.inherits(Ctor, modelCtor);
+      model = new Ctor();
+      model.prepare(self);
+      name = model.className[0].toLowerCase() + model.className.slice(1);
+      self[name] = model;
+      return model;
+    });
+  }
+
+  this.emit('models_init', this.models);
+
+  // Get protos view engines
+  this.enginesByExtension = {};
+  var engine, instance, engineProps = ['className', 'extensions'];
+  for (engine in protos.engines) {
+    instance = new protos.engines[engine](this);
+    instance.className = instance.constructor.name;
+    protos.util.onlySetEnumerable(instance, engineProps);
+    this.engines[engine] = instance;
+  }
+
+  // Register engine extensions
+  var exts = [];
+  for (var key in this.engines) {
+    engine = this.engines[key];
+    exts = exts.concat(engine.extensions);
+    for (var i=0; i < engine.extensions.length; i++) {
+      key = engine.extensions[i];
+      this.enginesByExtension[key] = engine;
+    }
+  }
+
+  // Override engine extensions (from config)
+  var ext, extOverrides = this.config.viewExtensions;
+  for (ext in extOverrides) {
+    if (exts.indexOf(ext) == -1) exts.push(ext); // Register extension on `exts`
+    engine = this.engines[extOverrides[ext]]; // Get engine object
+    engine.extensions.push(ext); // Add ext to engine extensions
+    this.enginesByExtension[ext] = engine; // Override engine extension
+  }
+
+  // Set default template engine
+  this.defaultEngine = this.engines.hogan;
+
+  // Add the engines regular expression
+  this.engineRegex = new RegExp('^(' + Object.keys(this.engines).join('|').replace(/\-/, '\\-') + ')$');
+
+  this.emit('engines_init', this.engines);
+
+  // Get controllers/
+  var cpath = this.mvcpath + 'controllers/',
+      files = protos.util.getFiles(cpath);
+
+  // Create controllers and attach to app
+  var controllerCtor = protos.lib.controller;
+  var controller, file, className, Ctor;
+  for (i=0; i < files.length; i++) {
+    file = files[i];
+    key = file.replace(this.regex.jsFile, '');
+    className = file.replace(this.regex.jsFile, '');
+    Ctor = require(cpath + className);
+    Ctor = monkeyPatchController.call(this, Ctor);
+    instance = new Ctor(this);
+    instance.className = instance.constructor.name;
+    this.controllers[key.replace(/_controller$/, '')] = instance;
+  }
+
+/**
+  MainController instance
+  
+  @private
+  @property controller
+  @type Controller
+ */
+  this.controller = this.controllers.main;
+
+  this.emit('controllers_init', this.controllers);
+
+  // Generate template file regex from registered template extensions
+  this.regex.templateFile = new RegExp('\\.(' + exts.join('|') + ')$');
+  this.templateExtensions = exts;
+
+  // Generate static file regex
+  this.views.static = protos.util.ls(this.mvcpath + "views/" + this.paths.static, this.regex.templateFile);
+  this.views.staticAsoc = {};
+  this.views.pathAsoc = {};
+
+  // Associate static paths with their respective templates
+  for (file,key,i=0; i < this.views.static.length; i++) {
+    file = this.views.static[i];
+    key = file.replace(this.regex.templateFile, '');
+    this.views.staticAsoc['/' + key] = file;
+  }
+
+  // Partial & template regexes
+  var partialRegex = new RegExp('^_[a-zA-Z0-9-_]+\\.(' + exts.join('|') + ')$'),
+      templateRegex = new RegExp('\\.(' + exts.join('|') + ')$');
+
+  // Build partial views and add path associations
+  var partialPaths = [];
+  fileModule.walkSync(this.mvcpath + 'views', function(dirPath, dirs, files) {
+    var layoutPath = self.fullPath(self.mvcpath + 'views/' + self.paths.layout);
+    for (var path,file,i=0; i < files.length; i++) {
+      file = files[i];
+      path = dirPath + "/" + file;
+      if (partialRegex.test(file)) {
+        // Only build valid partial views
+        partialPaths.push(path);
+        self._buildPartialView(path);
+        watchPartial.call(self, path);
+      } else if (templateRegex.test(file)) {
+        // Build partial views for everything inside app.paths.layout
+        if (path.indexOf(layoutPath) === 0) {
+          partialPaths.push(path);
+          self._buildPartialView(path);
+          watchPartial.call(self, path);
+        }
+        // Only add valid templates to view associations
+        self.views.pathAsoc[self.relPath(path.replace(self.regex.templateFile, ''))] = path;
+      }
+    }
+  });
+
+  // Helper Partials
+  Object.keys(this.helpers).forEach(function(alias) {
+    var m, method, hkey, helper = self.helpers[alias];
+    for (m in helper) {
+      if (helper[m] instanceof Function) {
+        method = helper[m];
+        hkey = (alias == 'main')
+          ? util.format('$%s', m)
+          : util.format('$%s_%s', alias, m);
+        self.views.partials[hkey] = method;
+      }
+    }
+  });
+
+  this.emit('partials_init', this.views.partials, partialPaths);
+
+  // console.exit(this.views.partials);
+
+  // Initialize if no drivers or storages are present (no config set)
+  if (isEmpty(this.config.database) && isEmpty(this.config.storage)) this.initialize();
+
+  // console.exit(this);
+}
+
+util.inherits(Application, EventEmitter);
+
+/**
+  Initializes the application
+  @private
+  @method initialize
+ */
+
+Application.prototype.initialize = function() {
+  delete this.asyncQueue;
+
+  // Set initialized state
+  this.initialized = true;
+
+  // Emit the init event
+  this.emit('init', this);
+
+  // Run initialization code from init.js
+  this.require('init').call(null, this);
+
+}
+
+/**
+  Routes a request based on the application`s controllers, routes & static views
+  @private
+  @method routeRequest
+  @param {object} req
+  @param {object} res
+ */
+
+Application.prototype.routeRequest = function(req, res) {
+
+  // Prevent malformed HTTP Requests
+  if (req.url[0] != '/') {
+    res.writeHead(400, {Connection: 'close', Status: '400 Bad Request'});
+    res.end('');
+    return;
+  }
+
+  var urlData = parseUrl(req.url),
+      url = urlData.pathname,
+      controller;
+
+  // Set request properties
+  res.app = req.app = this;
+  res.request = req;
+  req.response = res;
+  req.route = {};
+  req.urlData = urlData;
+  req.params = {};
+  req.isStatic = false;
+  res.__context = null;
+  res.__setCookie = [];
+  req.__handledRoute = false;
+  res.__headers = _.extend({}, this.config.headers);
+
+  // On HEAD requests, redirect to request url (should be processed before the `request` event)
+  if (req.method == 'HEAD') {
+    this.emit('head_request', req, res);
+    if (req.__stopRoute === true) return;
+    res.redirect(req.url, 301);
+    return;
+  }
+
+  // Load query data (should be made available before the `request` event)
+  if ( req.method == 'GET' && typeof req.urlData.query == 'string' ) {
+    req.queryData = qs.parse(req.urlData.query);
+  } else {
+    req.queryData = {};
+  }
+  
+  // Detect if it`s an AJAX Request
+  req.isAjax = this._detectAjax(req);
+
+  // Emit  the `request` event
+  this.emit('request', req, res);
+  if (req.__stopRoute === true) return;
+
+  // Strict routing, account for case sensitivity
+  if (!this.config.server.strictRouting) {
+    url = req.urlData.pathname = req.urlData.pathname.toLowerCase();
+  }
+
+  if (url == '/' || this.regex.singleParam.test(url)) {
+
+    req.__isMainRequest = true;
+
+    controller = (url !== '/')
+    ? (this.controller.getControllerByAlias(url) || this.controller)
+    : this.controller;
+
+    controller.processRoute.call(controller, urlData, req, res, this);
+
+  } else {
+
+    req.__isMainRequest = null;
+    this.controller.exec.call(this.controller, urlData, req, res, this);
+
+  }
+
+  // If route has been handled, return
+  if (req.__handledRoute) return;
+
+  // Static file requests
+
+  if ( this.supports.static_server && this._isStaticFileRequest(req, res) ) {
+    var filePath = (this.path + '/' + this.paths.public + url).trim();
+    this._serveStaticFile(filePath, req, res);
+  }
+
+}
+
+/**
+  Requires an application`s module, relative to the application`s path
+  
+    app.require('node_modules/multi');
+  
+  @method require
+  @param {string} module
+  @return {object} required module
+ */
+
+Application.prototype.require = function(module) {
+  try {
+    return require(this.path + "/node_modules/" + module);
+  } catch (e) {
+    module = module.replace(this.regex.relPath, '');
+    return require(this.path + "/" + module);
+  }
+}
+
+/**
+  Loads middleware
+  
+    app.use('session', {
+      guestSessions: true,
+      salt: 'abc1234'
+    });
+  
+  @method use
+  @param {string} middleware  Middleware to load
+  @param {object} options  Options to pass to the middleware constructor
+  @return {object} instance of the component`s function
+ */
+
+Application.prototype.use = function(middleware, options) {
+  var Ctor, p, path = this.path + '/middleware/' + middleware;
+
+  if ( pathModule.existsSync(path + '.js') ) {
+    // Load application middleware: js file
+    Ctor = require(path + '.js');
+  } else if ( pathModule.existsSync(path + '/' + middleware + '.js') ) {
+    // Load application middleware: middleware.js
+    Ctor = require(path + '/' + middleware + '.js');
+  } else if ( pathModule.existsSync(path + '.coffee') ) {
+    // Load application middleware: cs file
+    Ctor = require(path + '.coffee');
+  } else if ( pathModule.existsSync(path + '/' + middleware + '.coffee') ) {
+    // Load application middleware: middleware.coffee
+    Ctor = require(path + '/' + middleware + '.coffee');
+  } else if ( pathModule.existsSync(path) ) {
+    // Load application middleware: directory
+    Ctor = require(path);
+  } else {
+    path = protos.path + '/middleware/' + middleware;
+    if ( pathModule.existsSync(path + '.js') ) {
+      // Load protos middleware: js file
+      Ctor = require(path + '.js');
+    } else if ( pathModule.existsSync(path + '/' + middleware + '.js') ) {
+      // Load protos middleware: middleware.js
+      Ctor = require(path + '/' + middleware + '.js');
+    } else if ( pathModule.existsSync(path + '.coffee') ) {
+      // Load protos middleware: cs file
+      Ctor = require(path + '.coffee');
+    } else if ( pathModule.existsSync(path + '/' + middleware + '.coffee') ) {
+      // Load protos middleware: middleware.coffee
+      Ctor = require(path + '/' + middleware + '.coffee');
+    } else if ( pathModule.existsSync(path) ) {
+      // Load protos middleware: directory
+      Ctor = require(path);
+    } else {
+      throw new Error(util.format("Middleware not found: '%s'", middleware));
+    }
+  }
+
+  // Register middleware support
+  this.supports[middleware] = true;
+
+  // Show debug message on load
+  this.debug("Middleware: %s", middleware);
+
+  if (Ctor instanceof Function) {
+    // Middlewares attach themselves into the app singleton
+    try {
+      return new Ctor(options || {}, middleware);
+    } catch(e) {
+      console.exit(e.stack || e);
+    }
+  }
+}
+
+/**
+  Validates request data (both for GET & POST), against the validation rules
+  provided when defining the route.
+
+  If the validation is not successful, a response of HTTP/400 is given.
+  
+  @private
+  @method validate
+  @param {object} req
+  @param {object} fields
+  @param {boolean} onlyCheck
+  @return {boolean}, if onlyCheck is true
+ */
+
+Application.prototype.validate = function(req, fields, onlyCheck) {
+  var msg, regex, param, exclude,
+    res = req.response,
+    route = req.route,
+    messages = route.messages,
+    paramKeys = route.paramKeys,
+    valid = true,
+    counter = 0;
+
+  if (route.validation != null) {
+
+    for (param in fields) {
+      fields[param] = fields[param].trim();
+
+      if (route.validation[param] != null) {
+        counter++;
+
+        if ( typeof route.validation[param] == 'string' && route.validation[param] in app.regex ) {
+          regex = this.regex[route.validation[param]];
+        } else regex = route.validation[param];
+
+        if ( regex.test(fields[param]) ) {
+          fields[param] = protos.util.typecast(fields[param]);
+          continue;
+        } else {
+          req.__invalidParam = [ param, fields[param] ];
+
+          if (this.supports.body_parser && (req.method == 'POST' || req.method == 'PUT')) {
+            req.__requestData.files.removeAll();
+          }
+
+          // Note: onlyCheck is recommended only for GET requests.
+          if (onlyCheck) return false;
+
+          if ( messages != null && messages[param] != null ) {
+
+            if (typeof messages[param] == 'function') {
+              msg = messages[param].call(this, fields[param]);
+            } else msg = messages[param];
+
+          } else msg = "Invalid: " + fields[param];
+
+          res.httpMessage(400, msg);
+
+          return false;
+        }
+      } else {
+        continue;
+      }
+    }
+
+    exclude = 0;
+    var key, val;
+    for (key in req.params) {
+      val = req.params[key];
+      if (val !== undefined) exclude++;
+    }
+
+    if (counter !== (paramKeys.length - exclude)) {
+
+      if (this.supports.body_parser && (req.method == 'POST' || req.method == 'PUT')) {
+        req.__requestData.files.removeAll();
+      }
+
+      if (onlyCheck) return false;
+
+      res.httpMessage(400, 'Missing required fields');
+
+      return false;
+
+    } else {
+      return valid;
+    }
+  } else {
+
+    return true;
+
+  }
+}
+
+/**
+  Registers a view helper
+  @private
+  @method registerViewHelper
+  @param {string} alias View helper alias to use
+  @param {function} func Function to use as helper
+  @param {object} context Object to use as `this`
+ */
+
+Application.prototype.registerViewHelper = function(alias, func, context) {
+  /*jshint immed: false */
+  if (context) {
+    // Run function in context
+    (function() {
+
+      var slice = Array.prototype.slice;
+      this.views.partials[alias] = function() {
+        return func.apply(context, slice.call(arguments, 0));
+      }
+    }).call(this);
+  } else {
+    // Assign func as partial
+    this.views.partials[alias] = func;
+  }
+}
+
+/**
+  Returns the web application`s URL of a relative path
+  
+    app.url('hello-world');
+    app.url('user/add');
+  
+  @method url
+  @param {string} path
+  @return {string}
+ */
+
+Application.prototype.url = function(path) {
+  var baseUrl;
+  if (path == null) path = '';
+  baseUrl = this.baseUrl + "/" + (path.replace(this.config.regex.startsWithSlashes, '')
+  .replace(this.config.regex.multipleSlashes, '/'));
+  return baseUrl;
+}
+
+/**
+  Redirects to the login location, specified in app.loginUrl
+  
+    app.login(res);
+  
+  @method login
+  @param {object} res
+ */
+
+Application.prototype.login = function(res) {
+  var controller = res.__controller,
+    req = res.request,
+    route = req.route;
+
+  if (this.loginUrl) {
+    if (controller.className == 'MainController' && route.path === this.loginUrl) {
+      route.callback.call(controller, req, res, req.params);
+    } else {
+      res.redirect(this.loginUrl);
+    }
+  } else {
+    res.httpMessage(401); // Unauthorized
+  }
+
+}
+
+/**
+  Redirects to the web application`s home url
+  
+    app.home(res);
+  
+  @method home
+  @param {object} res
+ */
+
+Application.prototype.home = function(res) {
+  res.redirect("/");
+}
+
+/**
+  Logging facility for the application with timestamp.
+
+  Can be disabled by setting `app.logging` to false.
+  
+    app.log("Hello World");
+  
+  @method log
+  @param {string} context
+  @param {string} msg
+ */
+
+Application.prototype.log = function() {
+  var local = (this instanceof Application),
+      self = (local) ? this : this.app;
+  var data = self.logFormat.apply(this, [local, self, arguments]);
+  if (!data) return; // Exit if no log data provided
+  var msg = data[0], log = data[1];
+
+  if (!self.supports.logger && self.logging) console.log(log);
+
+  if (local) {
+    if (msg instanceof Error) self.emit('error_log', log);
+    else self.emit('info_log', log);
+  } else {
+    self.emit(this.event, log);
+  }
+}
+
+/**
+  Log Formatting method
+
+  @method logFormat
+  @param {boolean} local
+  @param {object} self
+  @param {string} args*  
+ */
+
+Application.prototype.logFormat = function(local, self, args) {
+  var level, msg;
+  args = slice.call(args, 0);
+  msg = args[0];
+
+  switch (typeof msg) {
+    case 'string':
+      if (args.length > 0) { // printf-like args
+        msg = util.format.apply(null, args);
+      }
+      break;
+
+    case 'object':
+      msg = util.inspect(msg);
+      break;
+
+    case 'undefined':
+      return;
+  }
+
+  if (local) {
+    level = (msg instanceof Error) ? 'error' : 'info';
+  } else {
+    level = this.level;
+    if (level == 'error' && typeof msg == 'string') {
+      msg = new Error(msg); // Convert msg to error to get stack trace
+    }
+  }
+
+  // Using msg.stack or msg, works both for strings and errors
+  var log = util.format('%s (%s) [%s] %s', self.domain, self.date(), level, (msg.stack || msg));
+
+  return [msg, log];
+}
+
+/**
+  Prints debugging messages when on Debug Mode.
+
+  Debug Mode can be enabled by setting `app.debugLog` to true.
+
+    app.debug("Something just happened at %s!!!", Date());
+
+  @method debug
+  @param {string} msg
+  @param {string} repls*
+ */
+
+Application.prototype.debug = function() {
+  if ( this.debugLog !== true ) return;
+  var msg = util.format.apply(this, arguments);
+  msg = util.format('\u001b[%sm%s (%s) - %s\u001b[0m', this.debugColor, this.domain, this.date(), msg);
+  console.log(msg);
+}
+
+/**
+  Returns a cryptographic hash
+
+  Notes:
+  
+  - Hashing Algorithms: 'md5', 'sha1', 'sha256', 'sha512', etc...
+  - Input Encodings: 'utf8', 'ascii', 'binary'
+  - Digest Encodings: 'hex', 'binary', 'base64'
+
+  For a full list of hash algorithms, run `$ openssl list-message-digest-algorithms`
+
+  The base64 digest of hashes is performed against the actual binary hash data, not the hex string.
+
+  References:
+  
+  - http://nodejs.org/docs/v0.6.14/api/crypto.html#crypto_crypto_createhash_algorithm
+  - http://nodejs.org/docs/v0.6.14/api/crypto.html#crypto_hash_update_data_input_encoding
+  - http://nodejs.org/docs/v0.6.14/api/crypto.html#crypto_hash_digest_encoding
+
+  Examples:
+
+    var md5 = app.createHash('md5', "Hello World");
+    var sha256 = app.createHash('sha256:hex', "Hello World");
+    var sha512 = app.createHash('sha512:base64', "Hello World", 'utf8');
+
+  @method createHash
+  @param {string} format  Hash format:  algorithm:[digest='hex']
+  @param {string} str  String to calculate the hash against
+  @param {encoding} Encoding to use. Defaults to nodes default ('binary')
+  @return {string} generated hash
+ */
+
+Application.prototype.createHash = function(format, str, encoding) {
+  var algorithm, digest;
+  format = format.split(':');
+  algorithm = format[0];
+  digest = format[1] || 'hex';
+  return crypto.createHash(algorithm).update(str, encoding || 'binary').digest(digest);
+}
+
+/**
+  Returns an md5 hash (hex)
+
+    app.md5('Hello World');
+
+  @method md5
+  @param {string} str
+  @param {string} encoding
+  @return {string}
+ */
+
+Application.prototype.md5 = function(str, encoding) {
+  return this.createHash('md5', str, encoding);
+}
+
+/**
+  Returns a path relative to the application`s path
+
+    var path = app.relPath('app/views/main/main-index.html');
+
+  @method relPath
+  @param {string} path
+  @param {string} offset
+  @return {string} relative path without offset
+ */
+
+Application.prototype.relPath = function(path, offset) {
+  var p = this.path + "/";
+  if (offset != null) {
+    p += offset.replace(this.regex.startOrEndSlash, '') + '/';
+  }
+  return path.replace(p, '');
+}
+
+/**
+  Returns the absolute path for an application`s relative path
+  
+    var fullPath = app.fullPath('boot.js');
+  
+  @method fullPath
+  @param {string} path
+  @return {string}
+ */
+
+Application.prototype.fullPath = function(path) {
+  path = path.replace(this.regex.startOrEndSlash, '');
+  return this.path + "/" + path;
+}
+
+/**
+  Returns the current date without extra timezone information
+  
+  @private
+  @method date
+  @return {string}
+ */
+
+var dateRepl = / [0-9]{4} /;
+
+Application.prototype.date = function() {
+  // Wed Feb 29 08:55:56
+  return Date().slice(0, 24).replace(dateRepl, ' ');
+}
+
+/**
+  Returns an HTTP/404 Response
+
+    app.notFound(res);
+
+  @method notFound
+  @param {object} res
+  @param {boolean} raw
+ */
+
+Application.prototype.notFound = function(res, raw) {
+  // Session or cookies are not loaded when rendering the 404 template
+  res.render('#404', raw || this.config.rawViews);
+}
+
+/**
+  Returns an HTTP/500 Response, using the template
+  
+    app.serverError(res, new Error('Something just happened'));
+  
+  @method serverError
+  @param {object} res
+  @param {array} logData
+ */
+
+Application.prototype.serverError = function(res, log) {
+  // Session or cookies are not loaded when rendering the 500 template
+  res.render('#500', {}, true);
+  if (log) {
+    this.emit('server_error', log);
+    this.log(log);
+  }
+}
+
+/**
+  Performs a curl request for an application`s resource
+
+  Provides [err, buffer]
+
+    app.curl('-X PUT /hello', function(err, buffer) {
+      console.log([err, buffer]);
+    });
+
+  @method curl
+  @param {string} cmd
+  @param {function} callback
+ */
+
+Application.prototype.curl = function(cmd, callback) {
+  cmd = cmd.trim();
+  var leftStr, requestUrl,
+      self = this,
+      wsIndex = cmd.lastIndexOf(' ');
+  if (wsIndex >= 0) {
+    leftStr = cmd.slice(0, wsIndex);
+    requestUrl = cmd.slice(wsIndex).trim();
+    cmd = (requestUrl.indexOf('http://') === 0)
+    ? leftStr + ' ' + requestUrl
+    : leftStr + ' ' + this.baseUrl + requestUrl;
+  } else {
+    if (cmd.indexOf('http://') == -1) cmd = this.baseUrl + cmd;
+  }
+  cmd = 'curl ' + cmd;
+  cp.exec(cmd, function(err, stdout, stderr) {
+    var buf = err ? stderr : stdout;
+    callback.call(self, err, buf);
+  });
+}
+
+/**
+  Creates a client request for an application`s resource
+
+  Provides: [err, buffer, headers, statusCode, response]
+
+    app.clientRequest({
+      path: '/hello',
+      method: 'PUT'
+    }, function(err, buffer, headers, statusCode) {
+      console.log([err, buffer, headers])
+    });
+
+    app.clientRequest('/hello', function(err, buffer, headers, statusCode) {
+      console.log([err, buffer, headers]);
+    });
+
+  @method clientRequest
+  @param {object|string} o
+  @param {function} callback
+*/
+
+Application.prototype.clientRequest = function(o, callback) {
+  var path, method, headers, self = this;
+
+  if (typeof o == 'string') {
+    path = o;
+    method = 'GET';
+  } else {
+    path = o.path || '/';
+    method = o.method || 'GET';
+  }
+
+  headers = o.headers || {};
+
+  var req = http.request({
+    host: self.domain,
+    port: protos.config.server.listenPort,
+    method: method,
+    path: path,
+    headers: headers
+  }, function(res) {
+    var data = '';
+    res.on('data', function(chunk) {
+      data += chunk.toString('utf-8');
+    });
+    res.on('end', function() {
+      callback.call(self, null, data, res.headers, res.statusCode, res);
+    });
+  });
+
+  req.on('error', function(err) {
+    callback.call(self, err, null, null);
+  });
+
+  req.end();
+}
+
+/**
+  Calls a function after application has initialized
+
+    app.onInitialize(function() {
+      console.log('App initialized...');
+    });
+
+  @method oninitialize
+  @param {function} callback
+ */
+
+Application.prototype.onInitialize = function(callback) {
+  if (this.initialized) callback(this);
+  else this.once('init', callback);
+}
+
+/**
+  Checks if a static view exists
+
+  @private
+  @method _staticViewExists
+  @param {string} url
+  @return {boolean}
+ */
+
+Application.prototype._staticViewExists = function(url) {
+  var exists = false,
+      staticViews = this.views.static;
+
+  url = url.replace(this.regex.startOrEndSlash, '');
+
+  for (var ext,i=0; i < this.templateExtensions.length; i++) {
+    ext = this.templateExtensions[i];
+    if (staticViews.indexOf(url + '.' + ext) >= 0) {
+      exists = true;
+      break;
+    }
+  }
+
+  return exists;
+}
+
+/**
+  Builds a partial view and caches its function
+
+  @private
+  @method _buildPartialView
+  @param {string} path
+ */
+
+Application.prototype._buildPartialView = function(path) {
+
+  var self = this;
+  var p = pathModule.basename(path);
+
+  var pos = p.indexOf('.'),
+      ext = p.slice(pos+1),
+      engine = this.enginesByExtension[ext],
+      func = engine.renderPartial(path);
+
+  // path = path.slice(0, pos);
+
+  var id = path
+    .replace(this.mvcpath + 'views/', '')
+    .replace(/\/(_)?/g,'_')
+    .replace(/^__/, '');
+
+  id = id.slice(0, id.indexOf('.'));
+
+  // console.exit(id);
+
+  func.id = id;
+
+  this.views.partials[id] = func;
+}
+
+/**
+  Returns a new driver instance
+
+  @private
+  @method _driver
+  @param {string} driver
+  @param {object} config
+ */
+
+Application.prototype._driver = function(driver, config) {
+  return new protos.drivers[driver](this, config || {});
+}
+
+/**
+  Returns a new storage instance
+
+  @private
+  @method _storage
+  @param {string} driver
+  @param {object} config
+ */
+
+Application.prototype._storage = function(storage, config) {
+  return new protos.storages[storage](this, config || {});
+}
+
+/**
+  Gets a resource (driver or storage), using the config schema
+
+  example:
+
+    app._getResource('drivers/mysql');
+    app._getResource('storages/redis:queryCache');
+
+  @private
+  @method _getResource
+  @param {string} driver
+  @return {object} driver in app.drivers
+ */
+
+Application.prototype._getResource = function(schemeStr, callback) {
+  var db, section, source, out,
+      self = this,
+      scheme = schemeStr.split('/');
+
+  // If a resource is provided, return
+  if (scheme.length == 1) {
+    if (callback instanceof Function) {
+      this._getResource('resources/' + schemeStr, callback);
+    } else {
+      return this._getResource('resources/' + schemeStr);
+    }
+  }
+
+  source = scheme[0];
+  scheme = scheme[1];
+
+  if (scheme.indexOf(':') > 0) {
+    scheme = scheme.split(':');
+    db = scheme[0].trim();
+    section = scheme[1].trim();
+    out = this[source][db][section];
+  } else {
+    out = this[source][scheme];
+  }
+
+  if (out == null) {
+    throw new Error(util.format("Unable to find resource: '%s'", schemeStr));
+  } else if (callback) {
+    if (out.client == null) {
+      // Wait until client is initialized
+      this.on('init', function() {
+        callback.call(self, out);
+      });
+    } else {
+      // Client already initialized
+      callback.call(self, out);
+    }
+  } else {
+    return out;
+  }
+}
+
+/**
+  Detects if the request has been performed with XMLHttpRequest (AJAX)
+  
+  @private
+  @method _detectAjax
+  @param {object} req
+ */
+ 
+Application.prototype._detectAjax = function(req) {
+  return (req.headers['x-requested-with'] == 'XMLHttpRequest');
+}
+
+/**
+  Adds a filter. A filter is an event that is run and modifies the data passed
+  to it. Usually an object is passed, so the modification happens in place.
+  
+    app.addFilter('counter', function(data) {
+      data.counter++;
+      return data
+    });
+    
+  The filter callback **should** return the modified object, in order for the filter
+  to have any effect on the passed data.
+
+  @method addFilter
+  @param {string} filter
+  @param {function} callback
+ */
+
+Application.prototype.addFilter = function(filter, callback) {
+  var arr = this.__filters[filter];
+  if (arr instanceof Array) {
+    arr.push(callback);
+  } else {
+    this.__filters[filter] = [callback];
+  }
+  return this; // Enable chaining
+}
+
+/**
+  Applies filters to specific data. Any functions added to the filter in question,
+  can modify the filter input.
+  
+    var data = app.applyFilters('counter', {counter: 0});
+    
+  @method applyFilters
+  @param {string} filter
+  @param {mixed} value
+  @return {object} Modified object 
+ */
+
+Application.prototype.applyFilters = function() {
+  var filters = this.__filters[arguments[0]];
+  if (filters instanceof Array) {
+    var temp = arguments[1];
+    for (var i=0; i < filters.length; i++) {
+      temp = filters[i].call(this, temp);
+    }
+    return temp;
+  } else {
+    return arguments[1];
+  }
+}
+
+/**
+  Add a client resource.
+
+  The `data` argument has the following structure:
+  
+  {string} name: Name of the resource
+  {string} path: Path of the resource (relative to the public/ directory)
+  {string|array} requires: Dependencies required by the resource
+
+  @deprecated Since 0.0.4
+  @method addClientResource
+  @param {string} resource
+  @param {object} data
+ */
+
+Application.prototype.addClientResource = function(resource, data) {
+  if (! this.client[resource]) this.client[resource] = [];
+  this.client[resource].push(data);
+}
+
+/**
+  Gets a client resource
+
+  @deprecated Since 0.0.4
+  @method getClientResource
+  @param {string} resource Client resource
+  @param {string} name Resource name
+ */
+
+Application.prototype.getClientResource = function(resource, name) {
+  resource = this.client[resource];
+  if (resource) {
+    for (var res, i=0; i < resource.length; i++) {
+      res = resource[i];
+      if (res.name === name) return res;
+    }
+  }
+  return null;
+}
+
+/**
+  Adds a client script
+
+  @deprecated Since 0.0.4
+  @method addClientScript
+  @param {object} data
+ */
+
+Application.prototype.addClientScript = function(data) {
+  this.addClientResource('scripts', data);
+}
+
+/**
+  Adds a client stylesheet
+
+  @deprecated Since 0.0.4
+  @method addClientStylesheet
+  @param {object} data
+ */
+
+Application.prototype.addClientStylesheet = function(data) {
+  this.addClientResource('stylesheets', data);
+}
+
+/**
+  Load application`s extensions in myapp/lib/[*].js
+
+    app.libExtensions();
+    
+  The code above will load all the JavaScript files found on myapp/lib
+  
+  If you want to load specific files in myapp/lib:
+  
+    app.libExtensions('file1.js', 'file2.js');
+
+  @method libExtensions
+  @param {string} filename to load (accepts multiple)
+ */
+
+Application.prototype.libExtensions = function() {
+  var libPath = this.fullPath('lib');
+
+  // Exit if lib/ not present
+  if (! pathModule.existsSync(libPath)) throw new Error("Unable to find lib/");
+
+  var self = this,
+      args = slice.call(arguments, 0);
+
+  if (args.length === 0) args = protos.util.ls(libPath, /\.js$/);
+  args.forEach(function(lib) {
+    self.debug('Loading Extension: lib/' + lib);
+    self.require('lib/' + lib);
+  });
+}
+
+/*
+  Builds client resources
+ */
+
+function buildClientResources() {
+  // TODO: Compile client resource objects and resolve dependencies, using a topological sorting algorithm
+  // TODO: Run this function on the `server_init` event
+}
+
+/*
+  Helper function, equivalent to url.parse()
+ */
+
+function parseUrl(url) {
+  return urlModule.parse(url);
+}
+
+/*
+  Enhances the controller function, allowing it to inherit the Controller class. Also allows
+  the controller to locally use the static routing functions.
+ */
+
+function monkeyPatchController(func) {
+
+  var context, newFunc, compile, source,
+      funcSrc = func.toString();
+  var code = funcSrc
+      .trim()
+      .replace(/^function\s+(.*?)(\s+)?\{(\s+)?/, '')
+      .replace(/(\s+)?\}$/, '');
+
+  // Get source file path
+  var alias = protos.lib.controller.prototype.getAlias(func.name),
+      srcFile = this.mvcpath + 'controllers/' + alias + '.js';
+
+  try {
+    source = fs.readFileSync(srcFile, 'utf-8');
+  } catch(e){
+    source = fs.readFileSync(srcFile.replace(/\.js$/, '_controller.js'), 'utf-8');
+  }
+
+  // Detect pre & post function code
+  var si = source.indexOf(funcSrc),
+      preFuncSrc = source.slice(0, si).trim(),
+      postFuncSrc = source.slice(si + funcSrc.length).trim();
+
+  // Controller code
+
+  var fnCode = "\n\
+with (locals) {\n\n\
+function "+ func.name +"(app) {\n\
+  this.authFilters = this.authFilters['"+ func.name +"'] || [];\n\
+  this.prepare.call(this, app);\n\
+}\n\n\
+require('util').inherits("+ func.name +", protos.lib.controller);\n\n\
+protos.extend(" + func.name + ", protos.lib.controller);\n\n\
+"+ func.name +".authFilter = "+ func.name +".prototype.authFilter;\n";
+
+  // Controller code, within closure
+
+  fnCode += "\n\
+(function() { \n\n\
+" + preFuncSrc + "\n\n\
+with(this) {\n\n\
+  " + code + "\n\n\
+}\n\n\
+" + postFuncSrc + "\n\n\
+}).call(" + func.name + ");\n\n\
+"+ func.name +".prototype.authRequired = ("+ func.name +".authRequired) ? true\n\
+: protos.lib.controller.prototype.authRequired;\n\n\
+return " + func.name + ";\n\n\
+}\n";
+
+  // console.exit(fnCode);
+
+  /*jshint evil:true */
+  compile = new Function('locals', fnCode);
+
+  newFunc = compile({
+    app: this,
+    protos: protos,
+    module: {},
+    require: require,
+    console: console,
+    __dirname: this.mvcpath + 'controllers',
+    __filename: srcFile,
+    process: process
+  });
+
+  return newFunc;
+
+}
+
+// Parses the application configuration
+
+function parseConfig() {
+  var p = this.path + '/config/',
+      files = protos.util.getFiles(p),
+      mainPos = files.indexOf('base.js'),
+      jsExt = protos.regex.jsFile,
+      config = require(this.path + '/config/base.js');
+
+  for (var file,key,cfg,i=0; i < files.length; i++) {
+    if (i==mainPos) continue;
+    file = files[i];
+    key = file.replace(jsExt, '');
+    cfg = require(this.path + '/config/' + file);
+    if (typeof config[key] == 'object') _.extend(config[key], cfg);
+    else config[key] = cfg;
+  }
+
+  return config;
+}
+
+// Creates database drivers from config
+
+function createDrivers() {
+  var cfg, def, x, y, z,
+      config = this.config.database,
+      drivers = this.drivers;
+
+  if (Object.keys(config).length === 0) return;
+
+  for (x in config) {
+    cfg = config[x];
+    if (x == 'default') { def = cfg; continue; }
+    for (y in cfg) {
+      if (typeof cfg[y] == 'object') {
+        if (typeof drivers[x] == 'undefined') drivers[x] = {};
+        drivers[x][y] = this._driver(x, cfg[y]);
+      } else {
+        drivers[x] = this._driver(x, cfg);
+        break;
+      }
+    }
+  }
+
+  if (def) drivers.default = this._getResource('drivers/' + def);
+  else throw new Error('No default database set. Please check your config/database.');
+
+  if (typeof drivers.default == 'undefined') {
+    throw new Error(util.format("No driver available for '%s'.", def));
+  }
+}
+
+// Creates storages from config
+
+function createStorages() {
+  var cfg, x, y, z,
+      config = this.config.storage,
+      storages = this.storages;
+
+  if (Object.keys(config).length === 0) return;
+
+  for (x in config) {
+    cfg = config[x];
+    for (y in cfg) {
+      if (typeof cfg[y] == 'object') {
+        if (typeof storages[x] == 'undefined') storages[x] = {};
+        storages[x][y] = this._storage(x, cfg[y]);
+      } else {
+        storages[x] = this._storage(x, cfg);
+        break;
+      }
+    }
+  }
+}
+
+// Watches a view Partial for changes
+
+function watchPartial(path) {
+
+  // Only watch partials on development
+  if (this.environment !== 'development') return;
+
+  var self = this;
+  self.debug('Watching Partial for changes: %s', self.relPath(path, 'app/views'));
+  var watcher = fs.watch(path, function(event, filename) {
+    if (event == 'change') {
+      self.debug("Regeneraging view partial", self.relPath(path));
+      self._buildPartialView(path);
+    }
+    else if (event == 'rename') {
+      self.log(util.format("Stopped watching partial '%s' (renamed)", self.relPath(path)));
+      watcher.close();
+    }
+  });
+}
+
+module.exports = Application;
+</pre><!-- .brush: js -->
+</div>
+
+                    </div>
+			</div>
+		</div>
+		<div class="yui-b">
+            <div class="nav">
+
+                    <div id="moduleList" class="module">
+                        <h4>Modules</h4>
+                        <ul class="content">
+                                <li class=""><a href="module_drivers.html" title="drivers">drivers</a></li>
+                                <li class=""><a href="module_engines.html" title="engines">engines</a></li>
+                                <li class="selected"><a href="module_lib.html" title="lib">lib</a></li>
+                                <li class=""><a href="module_storages.html" title="storages">storages</a></li>
+                        </ul>
+                    </div>
+
+                    <div id="classList" class="module">
+                        <h4>Classes</h4>
+                        <ul class="content">
+                                <li class=""><a href="Application.html" title="Application">Application</a></li>
+                                <li class=""><a href="Controller.html" title="Controller">Controller</a></li>
+                                <li class=""><a href="Driver.html" title="Driver">Driver</a></li>
+                                <li class=""><a href="Engine.html" title="Engine">Engine</a></li>
+                                <li class=""><a href="Helper.html" title="Helper">Helper</a></li>
+                                <li class=""><a href="http.IncomingMessage.html" title="http.IncomingMessage">http.IncomingMessage</a></li>
+                                <li class=""><a href="http.OutgoingMessage.html" title="http.OutgoingMessage">http.OutgoingMessage</a></li>
+                                <li class=""><a href="Model.html" title="Model">Model</a></li>
+                                <li class=""><a href="ModelObject.html" title="ModelObject">ModelObject</a></li>
+                                <li class=""><a href="Protos.html" title="Protos">Protos</a></li>
+                                <li class=""><a href="Storage.html" title="Storage">Storage</a></li>
+                                <li class=""><a href="Utility.html" title="Utility">Utility</a></li>
+                        </ul>
+                    </div>
+
+                    <div id="fileList" class="module">
+                        <h4>Files</h4>
+                        <ul class="content">        
+                                <li class="selected"><a href="application.js.html" title="application.js">application.js</a></li>
+                                <li class=""><a href="command.js.html" title="command.js">command.js</a></li>
+                                <li class=""><a href="controller.js.html" title="controller.js">controller.js</a></li>
+                                <li class=""><a href="driver.js.html" title="driver.js">driver.js</a></li>
+                                <li class=""><a href="engine.js.html" title="engine.js">engine.js</a></li>
+                                <li class=""><a href="extensions.js.html" title="extensions.js">extensions.js</a></li>
+                                <li class=""><a href="helper.js.html" title="helper.js">helper.js</a></li>
+                                <li class=""><a href="model.js.html" title="model.js">model.js</a></li>
+                                <li class=""><a href="protos.js.html" title="protos.js">protos.js</a></li>
+                                <li class=""><a href="regex.js.html" title="regex.js">regex.js</a></li>
+                                <li class=""><a href="request.js.html" title="request.js">request.js</a></li>
+                                <li class=""><a href="response.js.html" title="response.js">response.js</a></li>
+                                <li class=""><a href="storage.js.html" title="storage.js">storage.js</a></li>
+                                <li class=""><a href="utility.js.html" title="utility.js">utility.js</a></li>
+                        </ul>
+                    </div>
+
+
+
+
+
+            </div>
+		</div>
+	</div>
+	<div id="ft">
+        <hr />
+        Copyright &copy; 2012 <a href="https://github.com/derdesign">Ernesto M&eacute;ndez</a>. All rights reserved.
+	</div>
+</div>
+<script type="text/javascript">
+
+    var ALL_YUI_PROPS = [{"url": "Model.html#method_add", "access": "", "host": "Model", "type": "method", "name": "add"}, {"url": "Driver.html#method_addCacheData", "access": "private", "host": "Driver", "type": "method", "name": "addCacheData"}, {"url": "Application.html#method_addClientResource", "access": "", "host": "Application", "type": "method", "name": "addClientResource"}, {"url": "Application.html#method_addClientScript", "access": "", "host": "Application", "type": "method", "name": "addClientScript"}, {"url": "Application.html#method_addClientStylesheet", "access": "", "host": "Application", "type": "method", "name": "addClientStylesheet"}, {"url": "Application.html#method_addFilter", "access": "", "host": "Application", "type": "method", "name": "addFilter"}, {"url": "Application.html#method_applyFilters", "access": "", "host": "Application", "type": "method", "name": "applyFilters"}, {"url": "Engine.html#property_async", "access": "private", "host": "Engine", "type": "property", "name": "async"}, {"url": "Protos.html#method_async", "access": "private", "host": "Protos", "type": "method", "name": "async"}, {"url": "Engine.html#method_asyncPartial", "access": "", "host": "Engine", "type": "method", "name": "asyncPartial"}, {"url": "Application.html#property_asyncQueue", "access": "private", "host": "Application", "type": "property", "name": "asyncQueue"}, {"url": "Controller.html#method_authFilter", "access": "", "host": "Controller", "type": "method", "name": "authFilter"}, {"url": "Controller.html#property_authRequired", "access": "", "host": "Controller", "type": "property", "name": "authRequired"}, {"url": "Application.html#property_baseUrl", "access": "", "host": "Application", "type": "property", "name": "baseUrl"}, {"url": "Protos.html#method_bootstrap", "access": "", "host": "Protos", "type": "method", "name": "bootstrap"}, {"url": "Application.html#method__buildPartialView", "access": "private", "host": "Application", "type": "method", "name": "_buildPartialView"}, {"url": "Engine.html#property_cache", "access": "private", "host": "Engine", "type": "property", "name": "cache"}, {"url": "Driver.html#method_cacheClientMethods", "access": "private", "host": "Driver", "type": "method", "name": "cacheClientMethods"}, {"url": "Engine.html#method_cacheFunction", "access": "", "host": "Engine", "type": "method", "name": "cacheFunction"}, {"url": "Driver.html#property_cacheKeys", "access": "private", "host": "Driver", "type": "property", "name": "cacheKeys"}, {"url": "Protos.html#method_checkInspectorStatus", "access": "private", "host": "Protos", "type": "method", "name": "checkInspectorStatus"}, {"url": "Utility.html#method_checkPort", "access": "", "host": "Utility", "type": "method", "name": "checkPort"}, {"url": "Application.html#property_className", "access": "private", "host": "Application", "type": "property", "name": "className"}, {"url": "Protos.html#property_className", "access": "", "host": "Protos", "type": "property", "name": "className"}, {"url": "Application.html#property_client", "access": "private", "host": "Application", "type": "property", "name": "client"}, {"url": "Storage.html#property_client", "access": "private", "host": "Storage", "type": "property", "name": "client"}, {"url": "Application.html#method_clientRequest", "access": "", "host": "Application", "type": "method", "name": "clientRequest"}, {"url": "Protos.html#property_clusterConfig", "access": "", "host": "Protos", "type": "property", "name": "clusterConfig"}, {"url": "Utility.html#method_colorize", "access": "", "host": "Utility", "type": "method", "name": "colorize"}, {"url": "Application.html#property_config", "access": "", "host": "Application", "type": "property", "name": "config"}, {"url": "Storage.html#property_config", "access": "private", "host": "Storage", "type": "property", "name": "config"}, {"url": "Protos.html#method_configExtend", "access": "", "host": "Protos", "type": "method", "name": "configExtend"}, {"url": "Protos.html#method_configure", "access": "private", "host": "Protos", "type": "method", "name": "configure"}, {"url": "Application.html#property_controller", "access": "private", "host": "Application", "type": "property", "name": "controller"}, {"url": "Application.html#property_controllers", "access": "private", "host": "Application", "type": "property", "name": "controllers"}, {"url": "Model.html#method_convertTypes", "access": "private", "host": "Model", "type": "method", "name": "convertTypes"}, {"url": "Model.html#method_create", "access": "", "host": "Model", "type": "method", "name": "create"}, {"url": "Model.html#method_createCurrentState", "access": "private", "host": "Model", "type": "method", "name": "createCurrentState"}, {"url": "Application.html#method_createHash", "access": "", "host": "Application", "type": "method", "name": "createHash"}, {"url": "Model.html#method_createModel", "access": "private", "host": "Model", "type": "method", "name": "createModel"}, {"url": "ModelObject.html#method_createMulti", "access": "private", "host": "ModelObject", "type": "method", "name": "createMulti"}, {"url": "Application.html#method_curl", "access": "", "host": "Application", "type": "method", "name": "curl"}, {"url": "Application.html#method_date", "access": "private", "host": "Application", "type": "method", "name": "date"}, {"url": "Application.html#method_debug", "access": "", "host": "Application", "type": "method", "name": "debug"}, {"url": "Application.html#property_debugColor", "access": "private", "host": "Application", "type": "property", "name": "debugColor"}, {"url": "Application.html#property_debugLog", "access": "", "host": "Application", "type": "property", "name": "debugLog"}, {"url": "Storage.html#method_decr", "access": "", "host": "Storage", "type": "method", "name": "decr"}, {"url": "Storage.html#method_decrBy", "access": "", "host": "Storage", "type": "method", "name": "decrBy"}, {"url": "Model.html#method_delete", "access": "", "host": "Model", "type": "method", "name": "delete"}, {"url": "ModelObject.html#method_delete", "access": "", "host": "ModelObject", "type": "method", "name": "delete"}, {"url": "Storage.html#method_delete", "access": "", "host": "Storage", "type": "method", "name": "delete"}, {"url": "Storage.html#method_deleteFromHash", "access": "", "host": "Storage", "type": "method", "name": "deleteFromHash"}, {"url": "Model.html#method_destroy", "access": "", "host": "Model", "type": "method", "name": "destroy"}, {"url": "ModelObject.html#method_destroy", "access": "", "host": "ModelObject", "type": "method", "name": "destroy"}, {"url": "Application.html#method__detectAjax", "access": "private", "host": "Application", "type": "method", "name": "_detectAjax"}, {"url": "Application.html#property_domain", "access": "private", "host": "Application", "type": "property", "name": "domain"}, {"url": "Protos.html#method_done", "access": "private", "host": "Protos", "type": "method", "name": "done"}, {"url": "Application.html#method__driver", "access": "private", "host": "Application", "type": "method", "name": "_driver"}, {"url": "Application.html#property_drivers", "access": "private", "host": "Application", "type": "property", "name": "drivers"}, {"url": "Protos.html#property_drivers", "access": "", "host": "Protos", "type": "property", "name": "drivers"}, {"url": "Protos.html#method_enableDebugger", "access": "", "host": "Protos", "type": "method", "name": "enableDebugger"}, {"url": "Application.html#property_engines", "access": "private", "host": "Application", "type": "property", "name": "engines"}, {"url": "Protos.html#property_engines", "access": "", "host": "Protos", "type": "property", "name": "engines"}, {"url": "Protos.html#property_environment", "access": "", "host": "Protos", "type": "property", "name": "environment"}, {"url": "Helper.html#method_escape", "access": "", "host": "Helper", "type": "method", "name": "escape"}, {"url": "Engine.html#method_evaluate", "access": "", "host": "Engine", "type": "method", "name": "evaluate"}, {"url": "Controller.html#method_exec", "access": "private", "host": "Controller", "type": "method", "name": "exec"}, {"url": "Storage.html#method_expire", "access": "", "host": "Storage", "type": "method", "name": "expire"}, {"url": "Protos.html#method_extend", "access": "", "host": "Protos", "type": "method", "name": "extend"}, {"url": "Engine.html#property_extensions", "access": "private", "host": "Engine", "type": "property", "name": "extensions"}, {"url": "Utility.html#method_extract", "access": "", "host": "Utility", "type": "method", "name": "extract"}, {"url": "Application.html#property___filters", "access": "private", "host": "Application", "type": "property", "name": "__filters"}, {"url": "Model.html#method_find", "access": "", "host": "Model", "type": "method", "name": "find"}, {"url": "Model.html#method_findAll", "access": "", "host": "Model", "type": "method", "name": "findAll"}, {"url": "Application.html#method_fullPath", "access": "", "host": "Application", "type": "method", "name": "fullPath"}, {"url": "ModelObject.html#property_generator", "access": "", "host": "ModelObject", "type": "property", "name": "generator"}, {"url": "Model.html#method_get", "access": "", "host": "Model", "type": "method", "name": "get"}, {"url": "Storage.html#method_get", "access": "", "host": "Storage", "type": "method", "name": "get"}, {"url": "Controller.html#method_getAlias", "access": "", "host": "Controller", "type": "method", "name": "getAlias"}, {"url": "Model.html#method_getAll", "access": "", "host": "Model", "type": "method", "name": "getAll"}, {"url": "Engine.html#method_getBoundaryWhitespace", "access": "private", "host": "Engine", "type": "method", "name": "getBoundaryWhitespace"}, {"url": "Engine.html#method_getCachedFunction", "access": "", "host": "Engine", "type": "method", "name": "getCachedFunction"}, {"url": "Application.html#method_getClientResource", "access": "", "host": "Application", "type": "method", "name": "getClientResource"}, {"url": "Controller.html#method_getControllerByAlias", "access": "", "host": "Controller", "type": "method", "name": "getControllerByAlias"}, {"url": "Engine.html#method_getEngineByExtension", "access": "", "host": "Engine", "type": "method", "name": "getEngineByExtension"}, {"url": "Utility.html#method_getFiles", "access": "", "host": "Utility", "type": "method", "name": "getFiles"}, {"url": "Storage.html#method_getHash", "access": "", "host": "Storage", "type": "method", "name": "getHash"}, {"url": "Controller.html#method_getQueryData", "access": "", "host": "Controller", "type": "method", "name": "getQueryData"}, {"url": "Application.html#method__getResource", "access": "private", "host": "Application", "type": "method", "name": "_getResource"}, {"url": "http.OutgoingMessage.html#method_getViewPath", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "getViewPath"}, {"url": "Application.html#property_globals", "access": "", "host": "Application", "type": "property", "name": "globals"}, {"url": "http.OutgoingMessage.html#method_headerFilter", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "headerFilter"}, {"url": "Application.html#property_helpers", "access": "private", "host": "Application", "type": "property", "name": "helpers"}, {"url": "Application.html#method_home", "access": "", "host": "Application", "type": "method", "name": "home"}, {"url": "http.OutgoingMessage.html#method_httpMessage", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "httpMessage"}, {"url": "Application.html#property_httpMethods", "access": "private", "host": "Application", "type": "property", "name": "httpMethods"}, {"url": "Application.html#property_httpStatusCodes", "access": "private", "host": "Application", "type": "property", "name": "httpStatusCodes"}, {"url": "Storage.html#method_incr", "access": "", "host": "Storage", "type": "method", "name": "incr"}, {"url": "Storage.html#method_incrBy", "access": "", "host": "Storage", "type": "method", "name": "incrBy"}, {"url": "Protos.html#property_inflect", "access": "", "host": "Protos", "type": "property", "name": "inflect"}, {"url": "Protos.html#method_inherits", "access": "", "host": "Protos", "type": "method", "name": "inherits"}, {"url": "Application.html#method_initialize", "access": "private", "host": "Application", "type": "method", "name": "initialize"}, {"url": "Application.html#property_initialized", "access": "private", "host": "Application", "type": "property", "name": "initialized"}, {"url": "Model.html#method_insert", "access": "", "host": "Model", "type": "method", "name": "insert"}, {"url": "http.OutgoingMessage.html#method_json", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "json"}, {"url": "Protos.html#method_launchApplication", "access": "private", "host": "Protos", "type": "method", "name": "launchApplication"}, {"url": "Protos.html#property_lib", "access": "", "host": "Protos", "type": "property", "name": "lib"}, {"url": "Application.html#method_libExtensions", "access": "", "host": "Application", "type": "method", "name": "libExtensions"}, {"url": "Application.html#method_log", "access": "", "host": "Application", "type": "method", "name": "log"}, {"url": "Application.html#method_logFormat", "access": "", "host": "Application", "type": "method", "name": "logFormat"}, {"url": "Application.html#property_logging", "access": "", "host": "Application", "type": "property", "name": "logging"}, {"url": "Application.html#method_login", "access": "", "host": "Application", "type": "method", "name": "login"}, {"url": "Application.html#property_loginUrl", "access": "", "host": "Application", "type": "property", "name": "loginUrl"}, {"url": "Utility.html#method_ls", "access": "", "host": "Utility", "type": "method", "name": "ls"}, {"url": "Engine.html#method_makePartialAsync", "access": "", "host": "Engine", "type": "method", "name": "makePartialAsync"}, {"url": "Driver.html#property_maxCacheTimeout", "access": "private", "host": "Driver", "type": "property", "name": "maxCacheTimeout"}, {"url": "Application.html#method_md5", "access": "", "host": "Application", "type": "method", "name": "md5"}, {"url": "Application.html#property_model", "access": "", "host": "Application", "type": "property", "name": "model"}, {"url": "Driver.html#property___modelMethods", "access": "private", "host": "Driver", "type": "property", "name": "__modelMethods"}, {"url": "Application.html#property_models", "access": "private", "host": "Application", "type": "property", "name": "models"}, {"url": "Engine.html#property_module", "access": "private", "host": "Engine", "type": "property", "name": "module"}, {"url": "Driver.html#method_multi", "access": "", "host": "Driver", "type": "method", "name": "multi"}, {"url": "Model.html#method_multi", "access": "private", "host": "Model", "type": "method", "name": "multi"}, {"url": "Storage.html#method_multi", "access": "", "host": "Storage", "type": "method", "name": "multi"}, {"url": "Engine.html#property_multiPart", "access": "private", "host": "Engine", "type": "property", "name": "multiPart"}, {"url": "Application.html#property_mvcpath", "access": "private", "host": "Application", "type": "property", "name": "mvcpath"}, {"url": "Model.html#method_new", "access": "", "host": "Model", "type": "method", "name": "new"}, {"url": "http.IncomingMessage.html#method_next", "access": "", "host": "http.IncomingMessage", "type": "method", "name": "next"}, {"url": "Application.html#method_notFound", "access": "", "host": "Application", "type": "method", "name": "notFound"}, {"url": "Application.html#method_oninitialize", "access": "", "host": "Application", "type": "method", "name": "oninitialize"}, {"url": "Utility.html#method_onlySetEnumerable", "access": "", "host": "Utility", "type": "method", "name": "onlySetEnumerable"}, {"url": "Engine.html#property_options", "access": "private", "host": "Engine", "type": "property", "name": "options"}, {"url": "http.IncomingMessage.html#method_pageTitle", "access": "", "host": "http.IncomingMessage", "type": "method", "name": "pageTitle"}, {"url": "Utility.html#method_parseRange", "access": "private", "host": "Utility", "type": "method", "name": "parseRange"}, {"url": "Application.html#property_path", "access": "private", "host": "Application", "type": "property", "name": "path"}, {"url": "Protos.html#property_path", "access": "", "host": "Protos", "type": "property", "name": "path"}, {"url": "Application.html#property_paths", "access": "private", "host": "Application", "type": "property", "name": "paths"}, {"url": "Controller.html#method_prepare", "access": "private", "host": "Controller", "type": "method", "name": "prepare"}, {"url": "Model.html#method_prepare", "access": "private", "host": "Model", "type": "method", "name": "prepare"}, {"url": "Controller.html#method_processRoute", "access": "private", "host": "Controller", "type": "method", "name": "processRoute"}, {"url": "Model.html#property_properties", "access": "", "host": "Model", "type": "property", "name": "properties"}, {"url": "Model.html#method_propertyCheck", "access": "private", "host": "Model", "type": "method", "name": "propertyCheck"}, {"url": "Driver.html#method_provideTo", "access": "private", "host": "Driver", "type": "method", "name": "provideTo"}, {"url": "http.OutgoingMessage.html#method_redirect", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "redirect"}, {"url": "Application.html#property_regex", "access": "", "host": "Application", "type": "property", "name": "regex"}, {"url": "Protos.html#property_regex", "access": "", "host": "Protos", "type": "property", "name": "regex"}, {"url": "Application.html#method_registerViewHelper", "access": "private", "host": "Application", "type": "method", "name": "registerViewHelper"}, {"url": "Application.html#method_relPath", "access": "", "host": "Application", "type": "method", "name": "relPath"}, {"url": "ModelObject.html#method_remove", "access": "", "host": "ModelObject", "type": "method", "name": "remove"}, {"url": "Storage.html#method_rename", "access": "", "host": "Storage", "type": "method", "name": "rename"}, {"url": "http.OutgoingMessage.html#method_render", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "render"}, {"url": "Engine.html#method_renderPartial", "access": "", "host": "Engine", "type": "method", "name": "renderPartial"}, {"url": "Application.html#method_require", "access": "", "host": "Application", "type": "method", "name": "require"}, {"url": "Protos.html#method_require", "access": "", "host": "Protos", "type": "method", "name": "require"}, {"url": "Utility.html#method_requireAllTo", "access": "", "host": "Utility", "type": "method", "name": "requireAllTo"}, {"url": "Application.html#property_resources", "access": "private", "host": "Application", "type": "property", "name": "resources"}, {"url": "Engine.html#method_returnPartials", "access": "", "host": "Engine", "type": "method", "name": "returnPartials"}, {"url": "Application.html#method_routeRequest", "access": "private", "host": "Application", "type": "method", "name": "routeRequest"}, {"url": "Application.html#property_routes", "access": "private", "host": "Application", "type": "property", "name": "routes"}, {"url": "Controller.html#method_runAuthFilters", "access": "private", "host": "Controller", "type": "method", "name": "runAuthFilters"}, {"url": "Helper.html#method_safe_str", "access": "", "host": "Helper", "type": "method", "name": "safe_str"}, {"url": "Helper.html#method_sanitize", "access": "", "host": "Helper", "type": "method", "name": "sanitize"}, {"url": "Model.html#method_save", "access": "", "host": "Model", "type": "method", "name": "save"}, {"url": "ModelObject.html#method_save", "access": "", "host": "ModelObject", "type": "method", "name": "save"}, {"url": "Utility.html#method_searchPattern", "access": "", "host": "Utility", "type": "method", "name": "searchPattern"}, {"url": "http.OutgoingMessage.html#method_sendHeaders", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "sendHeaders"}, {"url": "Application.html#property_server", "access": "private", "host": "Application", "type": "property", "name": "server"}, {"url": "Application.html#method_serverError", "access": "", "host": "Application", "type": "method", "name": "serverError"}, {"url": "Protos.html#property_serverOptions", "access": "", "host": "Protos", "type": "property", "name": "serverOptions"}, {"url": "Storage.html#method_set", "access": "", "host": "Storage", "type": "method", "name": "set"}, {"url": "Driver.html#method_setCachePrefix", "access": "private", "host": "Driver", "type": "method", "name": "setCachePrefix"}, {"url": "http.OutgoingMessage.html#method_setContext", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "setContext"}, {"url": "Model.html#method_setDefaults", "access": "private", "host": "Model", "type": "method", "name": "setDefaults"}, {"url": "Storage.html#method_setHash", "access": "", "host": "Storage", "type": "method", "name": "setHash"}, {"url": "http.OutgoingMessage.html#method_setHeaders", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "setHeaders"}, {"url": "Utility.html#method_setNonEnumerable", "access": "", "host": "Utility", "type": "method", "name": "setNonEnumerable"}, {"url": "http.IncomingMessage.html#method_setPageTitle", "access": "", "host": "http.IncomingMessage", "type": "method", "name": "setPageTitle"}, {"url": "Protos.html#method_startServer", "access": "private", "host": "Protos", "type": "method", "name": "startServer"}, {"url": "Application.html#method__staticViewExists", "access": "private", "host": "Application", "type": "method", "name": "_staticViewExists"}, {"url": "http.IncomingMessage.html#method_stopRoute", "access": "", "host": "http.IncomingMessage", "type": "method", "name": "stopRoute"}, {"url": "Application.html#method__storage", "access": "private", "host": "Application", "type": "method", "name": "_storage"}, {"url": "Driver.html#property_storage", "access": "private", "host": "Driver", "type": "property", "name": "storage"}, {"url": "Application.html#property_storages", "access": "private", "host": "Application", "type": "property", "name": "storages"}, {"url": "Protos.html#property_storages", "access": "", "host": "Protos", "type": "property", "name": "storages"}, {"url": "Utility.html#method_strRepeat", "access": "", "host": "Utility", "type": "method", "name": "strRepeat"}, {"url": "Application.html#property_supports", "access": "private", "host": "Application", "type": "property", "name": "supports"}, {"url": "ModelObject.html#method_sync", "access": "", "host": "ModelObject", "type": "method", "name": "sync"}, {"url": "Engine.html#method_syncPartial", "access": "", "host": "Engine", "type": "method", "name": "syncPartial"}, {"url": "Utility.html#method_toCamelCase", "access": "", "host": "Utility", "type": "method", "name": "toCamelCase"}, {"url": "Model.html#method_typecast", "access": "private", "host": "Model", "type": "method", "name": "typecast"}, {"url": "Utility.html#method_typecast", "access": "", "host": "Utility", "type": "method", "name": "typecast"}, {"url": "Model.html#method_update", "access": "", "host": "Model", "type": "method", "name": "update"}, {"url": "ModelObject.html#method_update", "access": "", "host": "ModelObject", "type": "method", "name": "update"}, {"url": "Storage.html#method_updateHash", "access": "", "host": "Storage", "type": "method", "name": "updateHash"}, {"url": "Application.html#method_url", "access": "", "host": "Application", "type": "method", "name": "url"}, {"url": "Application.html#method_use", "access": "", "host": "Application", "type": "method", "name": "use"}, {"url": "Protos.html#property_util", "access": "", "host": "Protos", "type": "property", "name": "util"}, {"url": "Application.html#method_validate", "access": "private", "host": "Application", "type": "method", "name": "validate"}, {"url": "Model.html#method_validateProperties", "access": "private", "host": "Model", "type": "method", "name": "validateProperties"}, {"url": "Model.html#property_validation", "access": "", "host": "Model", "type": "property", "name": "validation"}, {"url": "Protos.html#property_version", "access": "", "host": "Protos", "type": "property", "name": "version"}, {"url": "Application.html#property_viewCaching", "access": "", "host": "Application", "type": "property", "name": "viewCaching"}, {"url": "Application.html#property_views", "access": "private", "host": "Application", "type": "property", "name": "views"}];
+</script>
+</body>
+</html>

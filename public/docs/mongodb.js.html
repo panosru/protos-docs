@@ -1,0 +1,529 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html xmlns:yui="http://yuilibrary.com/rdf/1.0/yui.rdf#">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>API: storages   mongodb.js  (Protos Web Framework)</title>
+
+  <link rel="stylesheet" type="text/css" href="assets/reset-fonts-grids-min.css" />
+  <link rel="stylesheet" type="text/css" href="assets/api.css" />
+  <link type="text/css" rel="stylesheet" href="assets/sh/styles/shCoreDefault.css" />
+  <link type="text/css" rel="stylesheet" href="assets/client.css" />
+
+  <script type="text/javascript" src="assets/api-js"></script>
+  <script type="text/javascript" src="assets/ac-js"></script>
+
+  <script type="text/javascript" src="assets/jquery-1.7.1.js"></script>
+  <script type="text/javascript" src="assets/jquery.base64.js"></script>
+  <script type="text/javascript" src="assets/sh/scripts/shCore.js"></script>
+  <script type="text/javascript" src="assets/sh/scripts/shBrushJScript.js"></script>
+  <script type="text/javascript" src="assets/client.js"></script>
+
+</head>
+
+<body id="yahoo-com">
+
+<div id="doc3" class="yui-t2">
+	<div id="hd">
+        <h1><a href="http://derdesign.github.com/protos" title="Protos Web Framework">Protos Web Framework</a></h1>
+        <h3>storages&nbsp; <span class="subtitle">0.0.4</span></h3>
+        <a href="./index.html" title="Protos Web Framework">Protos Web Framework</a> 
+            &gt; <a href="./module_storages.html" title="storages">storages</a>
+                
+                 &gt; mongodb.js (source view) 
+        <form onsubmit="return false">
+            <div id="propertysearch">
+                Search: <input autocomplete="off" id="searchinput" />
+                <div id="searchresults">
+                    &nbsp;
+                </div>
+            </div>
+        </form>
+	</div>
+
+	<div id="bd">
+		<div id="yui-main">
+			<div class="yui-b">
+            <form action="#" name="yui-classopts-form" method="get" id="yui-classopts-form">
+                <fieldset>
+                    <legend>Filters</legend>
+                <span class="classopts"><input type="checkbox" name="show_private" id="show_private" /> <label for="show_private">Show Private</label></span>
+                <span class="classopts"><input type="checkbox" name="show_protected" id="show_protected" /> <label for="show_protected">Show Protected</label></span>
+                <span class="classopts"><input type="checkbox" name="show_deprecated" id="show_deprecated" /> <label for="show_deprecated">Show Deprecated</label></span>
+                </fieldset>
+            </form>
+
+                    <div id="srcout">
+                        <style>
+                            #doc3 .classopts { display:none; }
+                        </style>
+                        <div class="highlight"><pre><pre class="brush: js">
+/**
+  @module storages
+  @namespace storage
+ */
+
+var _ = require('underscore'),
+    util = require('util'),
+    mongodb = require('mongodb'),
+    Db = mongodb.Db,
+    Server = mongodb.Server,
+    ObjectID = mongodb.ObjectID;
+
+/**
+  MongoDB Storage class
+  
+  @class MongoStorage
+  @extends Storage
+  @constructor
+  @param {object} app Application instance
+  @param {object} config Storage configuration
+ */
+
+function MongoStorage(app, config) {
+  
+   var self = this;
+   
+   config = protos.extend({
+     host: 'localhost',
+     port: 27017,
+     database: 'store',
+     collection: 'keyvalue'
+   }, config);
+   
+   /**
+    Application instance
+    
+    @private
+    @property app
+    @type Application
+   */
+   
+   this.app = app;
+   
+   /**
+    Storage Configuration
+    
+      config: {
+        host: 'localhost',
+        port: 27017,
+        database: 'store',
+        collection: 'keyvalue'
+      }
+    
+    @property config
+    @type object
+   */
+   
+   this.config = config;
+   
+   /**
+    Class name
+    
+    @private
+    @property className
+    @type string
+   */
+   this.className = this.constructor.name;
+   
+   protos.async(app); // Register async queue
+   
+   var reportError = function(err) {
+     app.log(util.format("MongoStore [%s:%s] %s", config.host, config.port, err.code));
+     self.client = err;
+     protos.done(app); // Flush async queue
+   }
+   
+   protos.util.checkPort(config.port, function(err) {
+     
+     if (err) {
+       reportError(err);
+     } else {
+       
+       // Set db
+       self.db = new Db(config.database, new Server(config.host, config.port, {}));
+       
+       // Get client
+       self.db.open(function(err, client) {
+         if (err) {
+           reportError(err);
+         } else {
+           // Set client
+           self.client = client;
+            
+           // Get collection
+           client.collection(config.collection, function(err, collection) {
+             
+             // Set collection
+             self.collection = collection;
+             
+             // Flush async queue
+             protos.done(app);
+             
+           });
+           
+         }
+       });
+       
+     }
+   });
+   
+   // Set enumerable properties
+   protos.util.onlySetEnumerable(this, ['className', 'db']);
+}
+
+util.inherits(MongoStorage, protos.lib.storage);
+
+/* Storage API get */
+
+MongoStorage.prototype.get = function(key, callback) {
+  var self = this;
+  
+  // If key is a string (return single value)
+  if (typeof key == 'string') {
+    
+    self.collection.find({key: 'k'+ key}, {value: 1}, function(err, cursor) {
+      cursor.toArray(function(err, docs) {
+        if (err) callback.call(self, err);
+        else {
+          var doc = docs.shift();
+          doc = (doc && doc.value) || null;
+          callback.call(self, null, doc);
+        }
+      });
+    });
+    
+  // If key is an array » return object with key/values
+  } else if (key instanceof Array) {
+      for (var doc, keys=key, inArr=[], i=0; i < key.length; i++) {  
+        inArr.push('k' + key[i]);
+      }
+      
+      self.collection.find({key: {$in: inArr}}, {key: 1, value: 1, _id: 0}, function(err, cursor) {
+        var out = {};
+        cursor.toArray(function(err, docs) {
+          if (err) callback.call(self, err);
+          else {
+            for (i=0; i < docs.length; i++) {
+              doc = docs[i];
+              out[doc.key.slice(1)] = doc.value;
+            }
+            
+            for (i=0; i < keys.length; i++) {
+              key = keys[i];
+              if (! (key in out)) out[key] = null;
+            }
+            
+            callback.call(self, null, out);
+          }
+        });
+      });
+    
+  }
+}
+
+/* Storage API getHash */
+
+MongoStorage.prototype.getHash = function(key, callback) {
+  var self = this;
+  
+  self.collection.find({key: 'h'+key}, function(err, cursor) {
+    cursor.toArray(function(err, docs) {
+      if (err) callback.call(self, err);
+      else {
+        var doc = docs.shift();
+        doc = (doc && doc.value) || null;
+        callback.call(self, null, doc);
+      }
+    });
+  });
+  
+}
+
+/* Storage API set */
+
+MongoStorage.prototype.set = function(key, value, callback) {
+  var app = this.app,
+      self = this;
+  
+  // If key is a string » Sets a single value
+  if (typeof key == 'string') {
+    
+    var _key = 'k' + key;
+    
+    this.collection.find({key: _key}, {_id: 1}, function(err, cursor) {
+      cursor.toArray(function(err, docs) {
+        if (err) callback.call(self, err);
+        else {
+          var doc = docs.shift();
+          if (doc) {
+            app.debug('MongoStore::set: replacing existing data on key: ' + _key);
+            self.collection.update(doc, {
+              key: _key,
+              value: value
+            }, function(err, doc) {
+              // console.exit(doc);
+              callback.call(self, err || null);
+            });
+          } else {
+            app.debug('MongoStore::set: inserting new data on key: ' + _key);
+            self.collection.insert({
+              key: _key,
+              value: value
+            }, function(err, doc) {
+              // console.exit(doc);
+              callback.call(self, err || null);
+            });
+          }
+        }
+      });
+    });
+    
+  // If key is an array » Sets multiple values
+  } else if (key.constructor === Object) {
+    
+    callback = value;
+    
+    var keys = Object.keys(key),
+        multi = this.multi();
+        
+    for (var k, i=0; i < keys.length; i++) {
+      k = keys[i];
+      multi.set(k, key[k]);
+    }
+    
+    multi.exec(function(err, results) {
+      // console.exit(results);
+      callback.call(self, err || null);
+    });
+    
+  }
+}
+
+/* Storage API setHash */
+
+MongoStorage.prototype.setHash = function(key, object, callback) {
+  var app = this.app,
+      self = this,
+      _key = 'h' + key;
+      
+  self.collection.find({key: _key}, {_id: 1}, function(err, cursor) {
+    cursor.toArray(function(err, docs) {
+      if (err) callback.call(self, err);
+      else {
+        var doc = docs.shift();
+        if (doc) {
+          app.debug('MongoStore::set: replacing existing data on hash: ' + _key);
+          self.collection.update(doc, {
+            key: _key,
+            value: object
+          }, function(err, doc) {
+            // console.exit(doc);
+            callback.call(self, err || null);
+          });
+        } else {
+          app.debug('MongoStore::set: inserting new data on hash: ' + _key);
+          self.collection.insert({
+            key: _key,
+            value: object
+          }, function(err, doc) {
+            // console.exit(doc);
+            callback.call(self, err || null);
+          });
+        }
+      }
+    });
+  });
+  
+}
+
+/* Storage API updateHash */
+
+MongoStorage.prototype.updateHash = function(key, object, callback) {
+  var self = this,
+      _key = 'h' + key;
+  
+  self.collection.find({key: _key}, {_id: 1, value: 1}, function(err, cursor) {
+    cursor.toArray(function(err, docs) {
+      var doc = docs.shift();
+      if (doc) {
+        var newData = _.extend(doc.value, object);
+        self.collection.update({_id: doc._id}, {
+          key: _key,
+          value: newData
+        }, function(err) {
+          callback.call(self, err || null);
+        });
+      } else {
+        callback.call(self, null);
+      }
+    });
+  });
+  
+}
+
+/* Storage API deleteFromHash */
+
+MongoStorage.prototype.deleteFromHash = function(hash, key, callback) {
+  var self = this,
+      _key = 'h' + hash;
+  
+  self.collection.find({key: _key}, function(err, cursor) {
+    if (err) callback.call(self, err);
+    else {
+      cursor.toArray(function(err, docs) {
+        var doc = docs.shift();
+        doc = (doc && doc.value) || null;
+        if (doc) {
+          if (key in doc) {
+            delete doc[key];
+            self.collection.update({key: _key},{
+              key: _key,
+              value: doc
+            }, function(err) {
+              callback.call(self, err || null);
+            });
+          } else {
+            // Key not in doc
+            callback.call(self, null);
+          }
+        } else {
+          // Doc not found
+          callback.call(self, null);
+        }
+      });
+    }
+  });
+}
+
+/* Storage API delete */
+
+MongoStorage.prototype.delete = function(key, callback) {
+  var self = this,
+      keys = (typeof key == 'string') ? [key] : key,
+      inArr = [];
+  
+  for (var i=0; i < keys.length; i++) {
+    key = keys[i];
+    inArr.push('k'+key); // Regular key
+    inArr.push('h'+key); // Hash key
+  }
+  
+  self.collection.remove({
+    key: {$in: inArr}
+  }, function(err) {
+    callback.call(self, err || null);
+  });
+
+}
+
+/* Storage API rename */
+
+MongoStorage.prototype.rename = function(oldkey, newkey, callback) {
+  var self = this;
+  
+  // Get key
+  this.get(oldkey, function(err, val) {
+    if (err) callback.call(self, err);
+    else {
+      var prefix = (val != null) ? 'k' : 'h';
+      self.collection.update({key: prefix + oldkey}, {
+        $set: {key: prefix + newkey}
+      }, function(err) {
+        callback.call(self, err || null);
+      });
+    }
+  });
+}
+
+/* Storage API expire */
+
+MongoStorage.prototype.expire = function(key, timeout, callback) {
+  this.app.log("MongoStorage: MongoDB does not support key expiration");
+  callback.call(this, null);
+}
+
+/* Storage API incr */
+
+MongoStorage.prototype.incr = function(key, callback) {
+  this.incrBy(key, 1, callback);
+}
+
+/* Storage API incrBy */
+
+MongoStorage.prototype.incrBy = function(key, value, callback) {
+  var self = this;
+  self.collection.update({
+    key: 'k'+key
+  },{
+    $inc: {value: value}
+  }, function(err, results) {
+    callback.call(self, err, results);
+  });
+}
+
+/* Storage API decr */
+
+MongoStorage.prototype.decr = function(key, callback) {
+  this.incrBy(key, -1, callback);
+}
+
+/* Storage API decrBy */
+
+MongoStorage.prototype.decrBy = function(key, value, callback) {
+  this.incrBy(key, -value, callback);
+}
+  
+module.exports = MongoStorage;
+</pre><!-- .brush: js -->
+</div>
+
+                    </div>
+			</div>
+		</div>
+		<div class="yui-b">
+            <div class="nav">
+
+                    <div id="moduleList" class="module">
+                        <h4>Modules</h4>
+                        <ul class="content">
+                                <li class=""><a href="module_drivers.html" title="drivers">drivers</a></li>
+                                <li class=""><a href="module_engines.html" title="engines">engines</a></li>
+                                <li class=""><a href="module_lib.html" title="lib">lib</a></li>
+                                <li class="selected"><a href="module_storages.html" title="storages">storages</a></li>
+                        </ul>
+                    </div>
+
+                    <div id="classList" class="module">
+                        <h4>Classes</h4>
+                        <ul class="content">
+                                <li class=""><a href="storage.MongoStorage.html" title="storage.MongoStorage">storage.MongoStorage</a></li>
+                                <li class=""><a href="storage.RedisStorage.html" title="storage.RedisStorage">storage.RedisStorage</a></li>
+                        </ul>
+                    </div>
+
+                    <div id="fileList" class="module">
+                        <h4>Files</h4>
+                        <ul class="content">        
+                                <li class="selected"><a href="mongodb.js.html" title="mongodb.js">mongodb.js</a></li>
+                                <li class=""><a href="redis.js.html" title="redis.js">redis.js</a></li>
+                        </ul>
+                    </div>
+
+
+
+
+
+            </div>
+		</div>
+	</div>
+	<div id="ft">
+        <hr />
+        Copyright &copy; 2012 <a href="https://github.com/derdesign">Ernesto M&eacute;ndez</a>. All rights reserved.
+	</div>
+</div>
+<script type="text/javascript">
+
+    var ALL_YUI_PROPS = [{"url": "storage.MongoStorage.html#property_app", "access": "private", "host": "storage.MongoStorage", "type": "property", "name": "app"}, {"url": "storage.RedisStorage.html#property_app", "access": "private", "host": "storage.RedisStorage", "type": "property", "name": "app"}, {"url": "storage.MongoStorage.html#property_className", "access": "private", "host": "storage.MongoStorage", "type": "property", "name": "className"}, {"url": "storage.RedisStorage.html#property_className", "access": "private", "host": "storage.RedisStorage", "type": "property", "name": "className"}, {"url": "storage.MongoStorage.html#property_config", "access": "", "host": "storage.MongoStorage", "type": "property", "name": "config"}, {"url": "storage.RedisStorage.html#property_config", "access": "", "host": "storage.RedisStorage", "type": "property", "name": "config"}, {"url": "storage.RedisStorage.html#property_db", "access": "private", "host": "storage.RedisStorage", "type": "property", "name": "db"}];
+</script>
+</body>
+</html>

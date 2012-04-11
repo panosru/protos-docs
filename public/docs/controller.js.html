@@ -1,0 +1,898 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html xmlns:yui="http://yuilibrary.com/rdf/1.0/yui.rdf#">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>API: lib   controller.js  (Protos Web Framework)</title>
+
+  <link rel="stylesheet" type="text/css" href="assets/reset-fonts-grids-min.css" />
+  <link rel="stylesheet" type="text/css" href="assets/api.css" />
+  <link type="text/css" rel="stylesheet" href="assets/sh/styles/shCoreDefault.css" />
+  <link type="text/css" rel="stylesheet" href="assets/client.css" />
+
+  <script type="text/javascript" src="assets/api-js"></script>
+  <script type="text/javascript" src="assets/ac-js"></script>
+
+  <script type="text/javascript" src="assets/jquery-1.7.1.js"></script>
+  <script type="text/javascript" src="assets/jquery.base64.js"></script>
+  <script type="text/javascript" src="assets/sh/scripts/shCore.js"></script>
+  <script type="text/javascript" src="assets/sh/scripts/shBrushJScript.js"></script>
+  <script type="text/javascript" src="assets/client.js"></script>
+
+</head>
+
+<body id="yahoo-com">
+
+<div id="doc3" class="yui-t2">
+	<div id="hd">
+        <h1><a href="http://derdesign.github.com/protos" title="Protos Web Framework">Protos Web Framework</a></h1>
+        <h3>lib&nbsp; <span class="subtitle">0.0.4</span></h3>
+        <a href="./index.html" title="Protos Web Framework">Protos Web Framework</a> 
+            &gt; <a href="./module_lib.html" title="lib">lib</a>
+                
+                 &gt; controller.js (source view) 
+        <form onsubmit="return false">
+            <div id="propertysearch">
+                Search: <input autocomplete="off" id="searchinput" />
+                <div id="searchresults">
+                    &nbsp;
+                </div>
+            </div>
+        </form>
+	</div>
+
+	<div id="bd">
+		<div id="yui-main">
+			<div class="yui-b">
+            <form action="#" name="yui-classopts-form" method="get" id="yui-classopts-form">
+                <fieldset>
+                    <legend>Filters</legend>
+                <span class="classopts"><input type="checkbox" name="show_private" id="show_private" /> <label for="show_private">Show Private</label></span>
+                <span class="classopts"><input type="checkbox" name="show_protected" id="show_protected" /> <label for="show_protected">Show Protected</label></span>
+                <span class="classopts"><input type="checkbox" name="show_deprecated" id="show_deprecated" /> <label for="show_deprecated">Show Deprecated</label></span>
+                </fieldset>
+            </form>
+
+                    <div id="srcout">
+                        <style>
+                            #doc3 .classopts { display:none; }
+                        </style>
+                        <div class="highlight"><pre><pre class="brush: js">/*jshint immed: false */
+
+/**
+  @module lib
+*/
+
+var app;
+
+var _ = require('underscore'),
+    _s = require('underscore.string'),
+    fs = require('fs'),
+    slice = Array.prototype.slice,
+    EventEmitter = require('events').EventEmitter;
+    
+var aliasRegex = {re1: /Controller$/, re2: /^-/};
+
+/**
+  Controller class
+  
+  @private
+  @constructor
+  @class Controller
+ */
+
+function Controller() {
+  
+}
+
+/** 
+  If set to true, the controller will integrate with the [sessions middleware](http://derdesign.github.com/protos/middleware.html#session) to
+  provide a layer of authentication to the controller`s resources.
+
+  @static
+  @type boolean
+  @default false
+  @property authRequired 
+*/
+Controller.prototype.authRequired = false;
+
+/*
+  @private
+  @property authFilters
+ */
+Controller.prototype.authFilters = {};
+
+/*
+  @protected
+  @property queuedRoutes
+ */
+Controller.prototype.queuedRoutes = {};
+
+/*
+  @protected
+  @property httpMethods
+ */
+Controller.prototype.httpMethods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'TRACE'];
+
+/*
+  @protected
+  @property routeMethods
+ */
+Controller.prototype.routeMethods = [];
+
+var httpMethods = Controller.prototype.httpMethods;
+
+/*
+  Routing functions, accept the following parameters:
+  
+  @param {string} route, route to add
+  @param {object} arg2, route validation (optional)
+  @param {object} arg3, route validation messages (optional, requires arg2)
+  @param {function} arg4, callback to run if route is resolved
+ */
+
+function getRouteArgs(m, args) {
+  var regex, methods = [m], funcs = [];
+  
+  // Note: args is the `arguments` object passed from previous function
+  args = slice.call(args, 0);
+  
+  // Get any additional methods defined for route
+  while (typeof args.slice(-1).pop() == 'string') {
+    // Array.pop() alters the arguments array
+    methods.push(args.pop());
+  }
+  
+  // Generate regular expression for the route method(s)
+  regex = new RegExp('^('+ methods.join('|').toUpperCase() +')$');
+  
+  // Get route functions
+  var f, allowed = [Array, Function];
+  while ((f=args.slice(-1).pop())) {
+    // Array.pop() alters the arguments array
+    if (allowed.indexOf(f.constructor) >= 0) funcs.unshift(args.pop());
+    else break;
+  }
+  
+  // Flatten funcs
+  funcs = _.flatten(funcs);
+  
+  // Append route functions array
+  args.push(funcs);
+  
+  return {args: args, regex: regex};
+}
+
+for (var i=0; i < httpMethods.length; i++) {
+  (function(m) {
+    routeFunction(m,  function(route, arg2, arg3, arg4) {
+      // Normal routes use the controller`s authRequired value
+      
+      // Define route metadata array
+      var o = getRouteArgs(m, arguments);
+      var routeArr = [this, o.regex, this.authRequired, route];
+      
+      // Override first argument with route metadata array
+      o.args[0] = routeArr;
+      
+      // Run registerRoute function with modified arguments
+      registerRoute.apply(null, o.args);
+    });
+    
+    routeFunction('public_' + m,  function(route, arg2, arg3, arg4) {
+      // Note: public routes force authRequired=false
+      
+      // Define route metadata array
+      var o = getRouteArgs(m, arguments);
+      var routeArr = [this, o.regex, false, route];
+      
+      // Override first argument with route metadata array
+      o.args[0] = routeArr;
+      
+      // Run registerRoute function with modified arguments
+      registerRoute.apply(null, o.args);
+    });
+  
+    routeFunction('private_' + m,  function(route, arg2, arg3, arg4) {
+      // private routes force authRequired=true
+      
+      // Define route metadata array
+      var o = getRouteArgs(m, arguments);
+      var routeArr = [this, o.regex, true, route];
+      
+      // Override first argument with route metadata array
+      o.args[0] = routeArr;
+      
+      // Run registerRoute function with modified arguments
+      registerRoute.apply(null, o.args);
+    });
+    
+  }).call(this, httpMethods[i].toLowerCase());
+}
+
+/**
+  Prepares the controller after instantiation
+  
+  @private
+  @method prepare
+  @param {object} app
+ */
+ 
+Controller.prototype.prepare = function(instance) {
+  app = instance;
+  var args, i, queuedRoutes = this.queuedRoutes[app.domain];
+  for (i=0; i < queuedRoutes.length; i++) {
+    registerRoute.apply(this, args);
+  }
+  protos.util.onlySetEnumerable(this, ['className', 'authRequired']);
+}
+
+/**
+  Adds a custom authentication filter to the  controller.
+  
+  This method is intended to be used within controllers. It can also be run
+  multiple times, to register multiple filters for the same controller.
+  
+  Note: The context of this method is the constructor itself, not the instance.
+  This methods is passed to the constructor prior to instantiation, which is
+  why this method works on the constructor`s context.
+  
+  @static
+  @method authFilter
+  @param {function} cb
+ */
+ 
+Controller.prototype.authFilter = function(cb) {
+  var ctor = this.name,
+      authFilters = Controller.prototype.authFilters;
+
+  if (!authFilters[ctor]) authFilters[ctor] = [];
+  
+  authFilters[ctor].push(cb);
+}
+
+/**
+  Runs authentication filters for controller
+  
+  @private
+  @method runAuthFilters
+  @param {object} req
+  @param {object} res
+  @param {object} params
+  @param {function} callback
+ */
+
+Controller.prototype.runAuthFilters = function(req, res, params, callback) {
+  var self = this,
+      app = protos.app,
+      authFilters = this.authFilters,
+      fCount = authFilters.length;
+
+  var chain = callback.slice(0);
+  
+  if (chain.length > 1) {
+    req.next = function() {
+      var cb = chain.shift();
+      if (cb instanceof Function) cb.call(self, req, res, params);
+    }
+  }
+
+  if (fCount === 0) {
+    
+    // No filters to run, execute callback directly
+    chain.shift().call(this, req, res, params);
+    
+  } else {
+    
+    var retVal, filter, 
+        i=-1, 
+        promise = new EventEmitter();
+    
+    // Success event, emitted by filters when authentication is successful
+    promise.on('success', function() {
+      if (++i == fCount) {
+        // No more filters to run
+        chain.shift().call(self, req, res, params);
+      } else {
+        // Run filter
+        filter = authFilters[i];
+        filter.call(self, req, res, promise);
+      }
+    });
+    
+    // Initially emit the `success` event to run first filter
+    promise.emit('success');
+  }
+}
+
+/**
+  Retrieves GET parameters with field validation.
+  
+  The query parameters from the request will be validated against 
+  the route`s validation rules.
+  
+  @method getQueryData
+  @param {object} req
+  @param {string} token CSRF Token (optional)
+  @param {function} callback
+ */
+
+Controller.prototype.getQueryData = function(req, token, callback) {
+  var badVal, field, key, msg,
+      res = req.response,
+      fields = req.queryData;
+      
+  if (typeof callback == 'undefined') { callback = token; token = null; }
+      
+  if (req.method == 'GET') {
+    
+    if (app.validate(req, fields, true)) {
+      
+      // Check CSRF Token upon validation
+      if (app.supports.csrf) app.emit('csrf_check', req, token, fields);
+      
+      // Route stop: allows `csrf_check` event to stop execution
+      if (req.__stopRoute) return;
+      
+      // Cleanup fields in req.params
+      for (key in fields) {
+        if (typeof req.params[key] == 'undefined') {
+          delete req.params[key];
+        }
+      }
+      
+      callback.call(this, fields);
+      
+    } else if (req.route.messages != null && req.__invalidParam != null) {
+      
+      // Validate and provide message if available
+      field = req.__invalidParam[0];
+      badVal = req.__invalidParam[1];
+      
+      if ( (msg=req.route.messages[field]) != null ) {
+        if (msg instanceof Function) msg = msg(badVal);
+        res.httpMessage(400, msg);
+      } else {
+        app.notFound(res);
+      }
+    } else {
+      app.notFound(res);
+    }
+
+  } else {
+
+    app.notFound(res);
+    
+  }
+}
+
+/**
+  Returns a controller by its alias
+  
+  @method getControllerByAlias
+  @param {string} name
+  @return {object} Controller instance 
+ */
+
+Controller.prototype.getControllerByAlias = function(name) {
+  // TODO: ignore /main
+  var spos, controller, controllerName;
+  name = name.replace(app.regex.startOrEndSlash, '');
+  spos = name.indexOf('/');
+  if (spos > 0) name = name.slice(0, spos);
+  return app.controllers[name];
+}
+
+/**
+  Gets a controller alias
+  
+  @method getAlias
+  @param {string} Controller Class (optional)
+  @return {string}
+ */
+
+Controller.prototype.getAlias = function(controllerClass) {
+  if (!controllerClass) controllerClass = this.constructor.name;
+  return (_s.dasherize(controllerClass
+  .replace(aliasRegex.re1, ''))
+  .replace(aliasRegex.re2, ''));
+}
+
+/**
+  Determines which route to use and which callback to call, based on
+  the request`s method & pathname.
+  
+  @private
+  @method processRoute
+  @param {object} urlData
+  @param {object} res
+  @param {object} req
+ */
+
+Controller.prototype.processRoute = function(urlData, req, res) {
+  
+  var cb, self = this,
+      routes = (app.routes[this.constructor.name] || []),
+      url = urlData.pathname;
+  
+  res.__controller = this;
+  
+  for (var route, i=0; i < routes.length; i++) {
+    route = routes[i];
+    
+    // Route path matches URL
+    // Note: To increase security, we check if the validation routes are empty
+    
+    if (route.path === url && route.paramKeys.length === 0) { // Route path matches url
+      
+      if (route.method.test(req.method)) { // If Route method matches request method
+        
+        req.route = route;
+        
+        if (app.supports.body_parser && (req.method == 'POST' || req.method == 'PUT') ) { // POST & PUT
+          
+          if (req.exceededUploadLimit()) return;
+
+          req.parseBodyData(function(fields, files) {
+
+            req.__requestData = {
+              fields: fields,
+              files: files
+            };
+
+            // Preload callback
+            req.__handledRoute = true;
+            cb = function() {
+              if (app.supports.session && route.authRequired) {
+                if (req.session.user != null) {
+                  route.callback.call(self, req, res, req.params);
+                } else {
+                  if (req.__requestData.files instanceof app.resources.body_parser.file_manager) {
+                    req.__requestData.files.removeAll();
+                  }
+                  app.login(res);
+                }
+              } else {
+                route.callback.call(self, req, res, req.params);
+              }
+            }
+
+            // Check if session is enabled, otherwise proceed normally with prepared callback
+            if (app.supports.session) app.session.loadSession(req, res, cb);
+            else cb.call(this);
+          });
+          
+        } else { // GET & OTHERS
+          
+          // Preload callback
+          req.__handledRoute = true;
+          cb = function() {
+            if (app.supports.session && route.authRequired) {
+              if (req.session.user != null) {
+                route.callback.call(self, req, res, req.params);
+              } else {
+                app.login(res);
+              }
+            } else {
+              route.callback.call(self, req, res, req.params);
+            }
+          }
+          
+          // Check if session is enabled, otherwise proceed normally with prepared callback
+          if (app.supports.session) app.session.loadSession(req, res, cb);
+          else cb.call(this);
+        }
+        
+      } else { // Route method doesn't match request method
+      
+        res.httpMessage(405); // HTTP/1.1 405 Method Not Allowed
+        
+      }
+      
+      return; // Exit function early. Don't delete this line or bad things will happen.
+      
+    } else if (route.regex.test(urlData.pathname)) { // Matched route with validation
+      
+      // Populate route params
+      if (route.method.test(req.method)) {
+        req.route = route;
+        if (route.validation != null) {
+          var match = urlData.pathname.match(route.regex);
+          // console.exit(route.regex);
+          var j = 1;
+          for (var key in route.validation) {
+            req.params[key] = match[j];
+            j++;
+          }
+        }
+        
+        // console.exit(req.params);
+        
+        if (app.supports.body_parser && (req.method == 'POST' || req.method == 'PUT')) { // POST & PUT
+          
+          if (req.exceededUploadLimit()) return;
+          
+          req.parseBodyData(function(fields, files) {
+
+            req.__requestData = {
+              fields: fields,
+              files: files
+            };
+
+            // Preload callback
+            req.__handledRoute = true;
+            cb = function() {
+              if (app.supports.session && route.authRequired) {
+                if (req.session.user != null) {
+                  route.callback.call(self, req, res, req.params);
+                } else {
+                  req.__requestData.files.removeAll();
+                  app.login(res);
+                }
+              } else {
+                route.callback.call(self, req, res, req.params);
+              }
+            }
+            
+            // Check if session is enabled, otherwise proceed normally with prepared callback
+            if (app.supports.session) app.session.loadSession(req, res, cb);
+            else cb.call(this);
+            
+          });
+          
+        } else { // GET & OTHERS
+          
+          // Preload callback
+          req.__handledRoute = true;
+          cb = function() {
+            if (app.supports.session && route.authRequired) {
+              if (req.session.user != null) {
+                route.callback.call(self, req, res, req.params);
+              } else {
+                app.login(res);
+              }
+            } else {
+              route.callback.call(self, req, res, req.params);
+            }
+          }
+          
+          // Check if session is enabled, otherwise proceed normally with prepared callback
+          if (app.supports.session) app.session.loadSession(req, res, cb);
+          else cb.call(this);
+        }
+        
+      } else {
+        res.httpMessage(405); // HTTP/1.1 405 Method Not Allowed
+      }
+      
+      return; // Exit function early. Don't delete this line or bad things will happen.
+      
+    }
+    
+  }
+  
+  /*
+  
+  ROUTE PROCESSING ORDER
+
+  '/' and Single Parameter routes:
+  
+    a) If a controller is found associated with the route (and a route in it matches), render it 
+    b) If a route is found in MainController that matches, render it 
+    c) If there's a static view that matches the route, render it 
+    d) Render 404
+
+  Multiple Parameter routes:
+  
+    a) If a controller is found associated with the route (and a route in it matches), render it 
+    b) If a route is found in MainController that matches, render it 
+    c) Render 404
+  
+  */
+  
+  var alias, controller, isGet = (req.method == 'GET');
+  
+  if (this.constructor.name == 'MainController') {
+    
+    if (req.__isMainRequest) { // If it's a mainRequest
+      
+      // Try getting a controller for the route
+      alias = url.replace(app.regex.startOrEndSlash, '');
+      controller = alias !== 'main' ? this.getControllerByAlias(alias) : null;
+      
+      if (controller != null && routes != null) {
+        // Controller found, process its routes
+        controller.processRoute.call(controller, urlData, req, res);
+      } else {
+        
+        if (isGet) { // If it's a GET request
+
+          if (app._staticViewExists(url) ) {
+            // Render a static view if found for such url
+            renderStaticView.call(this, url, req, res);
+          } else if (app.supports.static_server) {
+            // Serve any static files matching URL (sends  404 response if not found)
+            app._serveStaticFile(app.path + '/' + app.paths.public + url, req, res);
+          } else {
+            // Nothing found
+            app.notFound(res);
+          }
+          
+        } else {
+          
+          // Nothing found
+          app.notFound(res);
+          
+        }
+        
+      }
+      
+    } else if (isGet) { // Not a mainRequest. See if it's a GET request
+      
+      if (app._staticViewExists(url)) {
+        // Render a static view if found for such url
+        renderStaticView.call(this, url, req, res);
+      } else if (app.supports.static_server) {
+        // Serve any static files matching URL (sends  404 response if not found)
+        app._serveStaticFile(app.path + "/" + app.paths.public + url, req, res);
+      } else {
+        // Nothing found
+        app.notFound(res);
+      }
+      
+    } else {
+      
+      // Nothing found
+      app.notFound(res);
+      
+    }
+
+  } else if (isGet) {
+    
+    if (app._staticViewExists(url)) {
+      // Render a static view if found for such url
+      renderStaticView.call(this, url, req, res);
+    } else if (app.supports.static_server) {
+      // Serve any static files matching URL (sends 404 response if not found)
+      app._serveStaticFile(app.path + "/" + app.paths.public + url, req, res);
+    } else {
+      // Nothing found
+      app.notFound(res);
+    }
+    
+  } else { // It's not a get request, as a last resource, try locating the route on MainController
+    
+    app.controller.processRoute.call(app.controller, urlData, req, res);
+    
+  }
+}
+
+/**
+  Determines which controller to use for a request URL
+  
+  @private
+  @method exec
+  @param {object} urlData
+  @param {object} req
+  @param {object} res
+ */
+  
+Controller.prototype.exec = function(urlData, req, res) {
+  var controller,
+      url = urlData.pathname,
+      matches = url.match(app.regex.controllerAlias);
+  
+  if (matches) controller = app.controller.getControllerByAlias(matches[1]);
+  controller = (controller || app.controller);
+  controller.processRoute.call(controller, urlData, req, res);
+}
+
+/*
+  Renders a static view
+  
+  @private
+  @param {string} url
+  @param {object} req
+  @param {object} res
+ */
+
+function renderStaticView(url, req, res) {
+  var template;
+  url = url.replace(app.regex.endsWithSlash, '');
+  app.emit('static_view', req, res, url);
+  if (req.__stopRoute === true) return;
+  var cb = function() {
+    template = app.views.staticAsoc[url];
+    if (typeof template == 'string') {
+      res.render('/' + template);
+    } else {
+      app.serverError(res, [new Error('Unable to load template for ' + url)]);
+    }
+  }
+  if (app.supports.session) {
+    app.session.loadSession(req, res, cb);
+  } else {
+    cb.call(this);
+  }
+
+}
+
+
+/*
+  Route registration function, used both in Static & Prototype methods
+  
+  @private
+  @params {mixed} specified in the `Routing Functions` section on this file
+ */
+
+function registerRoute(route, arg2, arg3, arg4) {
+  
+  /*
+    Route registration happens in 2 iterations:
+
+    1) The routes are added in the Application`s controller (routes are queued) 
+    2) On instantiation, the routes are registered
+  */
+  
+  var app = protos.app,
+      getAlias = Controller.prototype.getAlias;
+  
+  var controller = route[0],
+    caller = controller.name,
+    method = route[1],
+    authRequired = route[2];
+    
+  route = route[3];
+  
+  var validation, messages, callback, regex;
+  
+  if (arg3 === undefined && arg2 instanceof Array) {
+    validation = null; messages = null; callback = arg2;
+  } else if (arg4 === undefined && typeof arg2 == 'object' && arg3 instanceof Array) {
+    messages = null; validation = arg2; callback = arg3;
+  } else if (typeof arg2 == 'object' && typeof arg3 == 'object' && arg4 instanceof Array) {
+    validation = arg2; messages = arg3; callback = arg4;
+  } else {
+    throw new Error("[" + app.domain + "] Unable to process route on " + caller + ": " + route);
+  }
+  
+  if ( !app.regex.startsWithSlash.test(route) ) route = "/" + route;
+  if (caller !== 'MainController') {
+    route = "/" + getAlias(caller) + route;
+  }
+  if (app.routes[caller] == null) app.routes[caller] = [];
+  if (route !== '/') route = route.replace(app.regex.endsWithSlash, '');
+
+  try {
+    if (validation == null) {
+      // allow an optional slash at the end
+      regex = new RegExp('^' + route.replace(app.regex.regExpChars, '\\$1') + '\\/?$');
+    } else {
+      regex = route.replace(app.regex.regExpChars, '\\$1');
+      for (var key in validation) {
+        if (typeof validation[key] == 'string') {
+          if (validation[key] in app.regex) {
+            validation[key] = app.regex[validation[key]];
+          } else {
+            throw new Error('Invalid Regular Expression alias: ' + validation[key]);
+          }
+        }
+        regex = regex.replace(new RegExp(':' + key, 'g'), '(' 
+        + validation[key]
+        .toString()
+        .replace(app.regex.startOrEndSlash, '')
+        .replace(app.regex.startOrEndRegex, '') + ')');
+      }
+      regex = regex.replace(/\(\(/g, '(').replace(/\)\)/g, ')');
+      regex = new RegExp('^' + regex + '\\/?$');
+    }
+  } catch (e) {
+    throw new Error("[" + app.domain + "] " + caller + ' ' + route + ': ' + e);
+  }
+
+  var paramKeys = ( validation ) ? Object.keys(validation) : [];
+
+  app.routes[caller].push({
+    path: route,
+    method: method,
+    regex: regex,
+    validation: validation || {},
+    paramKeys: paramKeys,
+    messages: messages,
+    authRequired: authRequired,
+    callback: function(req, res, params) {
+      this.runAuthFilters(req, res, params, callback);
+    },
+    caller: caller
+  });
+  
+}
+
+/*
+  Automates the addition of routing functions
+ */
+
+function routeFunction() {
+  var args = slice.call(arguments, 0),
+      func = args.pop();
+  for (var alias,i=0; i < args.length; i++) {
+    alias = args[i];
+    Controller.prototype.routeMethods.push(alias);
+    Controller[alias] = func;
+  }
+}
+
+module.exports = Controller;</pre><!-- .brush: js -->
+</div>
+
+                    </div>
+			</div>
+		</div>
+		<div class="yui-b">
+            <div class="nav">
+
+                    <div id="moduleList" class="module">
+                        <h4>Modules</h4>
+                        <ul class="content">
+                                <li class=""><a href="module_drivers.html" title="drivers">drivers</a></li>
+                                <li class=""><a href="module_engines.html" title="engines">engines</a></li>
+                                <li class="selected"><a href="module_lib.html" title="lib">lib</a></li>
+                                <li class=""><a href="module_storages.html" title="storages">storages</a></li>
+                        </ul>
+                    </div>
+
+                    <div id="classList" class="module">
+                        <h4>Classes</h4>
+                        <ul class="content">
+                                <li class=""><a href="Application.html" title="Application">Application</a></li>
+                                <li class=""><a href="Controller.html" title="Controller">Controller</a></li>
+                                <li class=""><a href="Driver.html" title="Driver">Driver</a></li>
+                                <li class=""><a href="Engine.html" title="Engine">Engine</a></li>
+                                <li class=""><a href="Helper.html" title="Helper">Helper</a></li>
+                                <li class=""><a href="http.IncomingMessage.html" title="http.IncomingMessage">http.IncomingMessage</a></li>
+                                <li class=""><a href="http.OutgoingMessage.html" title="http.OutgoingMessage">http.OutgoingMessage</a></li>
+                                <li class=""><a href="Model.html" title="Model">Model</a></li>
+                                <li class=""><a href="ModelObject.html" title="ModelObject">ModelObject</a></li>
+                                <li class=""><a href="Protos.html" title="Protos">Protos</a></li>
+                                <li class=""><a href="Storage.html" title="Storage">Storage</a></li>
+                                <li class=""><a href="Utility.html" title="Utility">Utility</a></li>
+                        </ul>
+                    </div>
+
+                    <div id="fileList" class="module">
+                        <h4>Files</h4>
+                        <ul class="content">        
+                                <li class=""><a href="application.js.html" title="application.js">application.js</a></li>
+                                <li class=""><a href="command.js.html" title="command.js">command.js</a></li>
+                                <li class="selected"><a href="controller.js.html" title="controller.js">controller.js</a></li>
+                                <li class=""><a href="driver.js.html" title="driver.js">driver.js</a></li>
+                                <li class=""><a href="engine.js.html" title="engine.js">engine.js</a></li>
+                                <li class=""><a href="extensions.js.html" title="extensions.js">extensions.js</a></li>
+                                <li class=""><a href="helper.js.html" title="helper.js">helper.js</a></li>
+                                <li class=""><a href="model.js.html" title="model.js">model.js</a></li>
+                                <li class=""><a href="protos.js.html" title="protos.js">protos.js</a></li>
+                                <li class=""><a href="regex.js.html" title="regex.js">regex.js</a></li>
+                                <li class=""><a href="request.js.html" title="request.js">request.js</a></li>
+                                <li class=""><a href="response.js.html" title="response.js">response.js</a></li>
+                                <li class=""><a href="storage.js.html" title="storage.js">storage.js</a></li>
+                                <li class=""><a href="utility.js.html" title="utility.js">utility.js</a></li>
+                        </ul>
+                    </div>
+
+
+
+
+
+            </div>
+		</div>
+	</div>
+	<div id="ft">
+        <hr />
+        Copyright &copy; 2012 <a href="https://github.com/derdesign">Ernesto M&eacute;ndez</a>. All rights reserved.
+	</div>
+</div>
+<script type="text/javascript">
+
+    var ALL_YUI_PROPS = [{"url": "Model.html#method_add", "access": "", "host": "Model", "type": "method", "name": "add"}, {"url": "Driver.html#method_addCacheData", "access": "private", "host": "Driver", "type": "method", "name": "addCacheData"}, {"url": "Application.html#method_addClientResource", "access": "", "host": "Application", "type": "method", "name": "addClientResource"}, {"url": "Application.html#method_addClientScript", "access": "", "host": "Application", "type": "method", "name": "addClientScript"}, {"url": "Application.html#method_addClientStylesheet", "access": "", "host": "Application", "type": "method", "name": "addClientStylesheet"}, {"url": "Application.html#method_addFilter", "access": "", "host": "Application", "type": "method", "name": "addFilter"}, {"url": "Application.html#method_applyFilters", "access": "", "host": "Application", "type": "method", "name": "applyFilters"}, {"url": "Engine.html#property_async", "access": "private", "host": "Engine", "type": "property", "name": "async"}, {"url": "Protos.html#method_async", "access": "private", "host": "Protos", "type": "method", "name": "async"}, {"url": "Engine.html#method_asyncPartial", "access": "", "host": "Engine", "type": "method", "name": "asyncPartial"}, {"url": "Application.html#property_asyncQueue", "access": "private", "host": "Application", "type": "property", "name": "asyncQueue"}, {"url": "Controller.html#method_authFilter", "access": "", "host": "Controller", "type": "method", "name": "authFilter"}, {"url": "Controller.html#property_authRequired", "access": "", "host": "Controller", "type": "property", "name": "authRequired"}, {"url": "Application.html#property_baseUrl", "access": "", "host": "Application", "type": "property", "name": "baseUrl"}, {"url": "Protos.html#method_bootstrap", "access": "", "host": "Protos", "type": "method", "name": "bootstrap"}, {"url": "Application.html#method__buildPartialView", "access": "private", "host": "Application", "type": "method", "name": "_buildPartialView"}, {"url": "Engine.html#property_cache", "access": "private", "host": "Engine", "type": "property", "name": "cache"}, {"url": "Driver.html#method_cacheClientMethods", "access": "private", "host": "Driver", "type": "method", "name": "cacheClientMethods"}, {"url": "Engine.html#method_cacheFunction", "access": "", "host": "Engine", "type": "method", "name": "cacheFunction"}, {"url": "Driver.html#property_cacheKeys", "access": "private", "host": "Driver", "type": "property", "name": "cacheKeys"}, {"url": "Protos.html#method_checkInspectorStatus", "access": "private", "host": "Protos", "type": "method", "name": "checkInspectorStatus"}, {"url": "Utility.html#method_checkPort", "access": "", "host": "Utility", "type": "method", "name": "checkPort"}, {"url": "Application.html#property_className", "access": "private", "host": "Application", "type": "property", "name": "className"}, {"url": "Protos.html#property_className", "access": "", "host": "Protos", "type": "property", "name": "className"}, {"url": "Application.html#property_client", "access": "private", "host": "Application", "type": "property", "name": "client"}, {"url": "Storage.html#property_client", "access": "private", "host": "Storage", "type": "property", "name": "client"}, {"url": "Application.html#method_clientRequest", "access": "", "host": "Application", "type": "method", "name": "clientRequest"}, {"url": "Protos.html#property_clusterConfig", "access": "", "host": "Protos", "type": "property", "name": "clusterConfig"}, {"url": "Utility.html#method_colorize", "access": "", "host": "Utility", "type": "method", "name": "colorize"}, {"url": "Application.html#property_config", "access": "", "host": "Application", "type": "property", "name": "config"}, {"url": "Storage.html#property_config", "access": "private", "host": "Storage", "type": "property", "name": "config"}, {"url": "Protos.html#method_configExtend", "access": "", "host": "Protos", "type": "method", "name": "configExtend"}, {"url": "Protos.html#method_configure", "access": "private", "host": "Protos", "type": "method", "name": "configure"}, {"url": "Application.html#property_controller", "access": "private", "host": "Application", "type": "property", "name": "controller"}, {"url": "Application.html#property_controllers", "access": "private", "host": "Application", "type": "property", "name": "controllers"}, {"url": "Model.html#method_convertTypes", "access": "private", "host": "Model", "type": "method", "name": "convertTypes"}, {"url": "Model.html#method_create", "access": "", "host": "Model", "type": "method", "name": "create"}, {"url": "Model.html#method_createCurrentState", "access": "private", "host": "Model", "type": "method", "name": "createCurrentState"}, {"url": "Application.html#method_createHash", "access": "", "host": "Application", "type": "method", "name": "createHash"}, {"url": "Model.html#method_createModel", "access": "private", "host": "Model", "type": "method", "name": "createModel"}, {"url": "ModelObject.html#method_createMulti", "access": "private", "host": "ModelObject", "type": "method", "name": "createMulti"}, {"url": "Application.html#method_curl", "access": "", "host": "Application", "type": "method", "name": "curl"}, {"url": "Application.html#method_date", "access": "private", "host": "Application", "type": "method", "name": "date"}, {"url": "Application.html#method_debug", "access": "", "host": "Application", "type": "method", "name": "debug"}, {"url": "Application.html#property_debugColor", "access": "private", "host": "Application", "type": "property", "name": "debugColor"}, {"url": "Application.html#property_debugLog", "access": "", "host": "Application", "type": "property", "name": "debugLog"}, {"url": "Storage.html#method_decr", "access": "", "host": "Storage", "type": "method", "name": "decr"}, {"url": "Storage.html#method_decrBy", "access": "", "host": "Storage", "type": "method", "name": "decrBy"}, {"url": "Model.html#method_delete", "access": "", "host": "Model", "type": "method", "name": "delete"}, {"url": "ModelObject.html#method_delete", "access": "", "host": "ModelObject", "type": "method", "name": "delete"}, {"url": "Storage.html#method_delete", "access": "", "host": "Storage", "type": "method", "name": "delete"}, {"url": "Storage.html#method_deleteFromHash", "access": "", "host": "Storage", "type": "method", "name": "deleteFromHash"}, {"url": "Model.html#method_destroy", "access": "", "host": "Model", "type": "method", "name": "destroy"}, {"url": "ModelObject.html#method_destroy", "access": "", "host": "ModelObject", "type": "method", "name": "destroy"}, {"url": "Application.html#method__detectAjax", "access": "private", "host": "Application", "type": "method", "name": "_detectAjax"}, {"url": "Application.html#property_domain", "access": "private", "host": "Application", "type": "property", "name": "domain"}, {"url": "Protos.html#method_done", "access": "private", "host": "Protos", "type": "method", "name": "done"}, {"url": "Application.html#method__driver", "access": "private", "host": "Application", "type": "method", "name": "_driver"}, {"url": "Application.html#property_drivers", "access": "private", "host": "Application", "type": "property", "name": "drivers"}, {"url": "Protos.html#property_drivers", "access": "", "host": "Protos", "type": "property", "name": "drivers"}, {"url": "Protos.html#method_enableDebugger", "access": "", "host": "Protos", "type": "method", "name": "enableDebugger"}, {"url": "Application.html#property_engines", "access": "private", "host": "Application", "type": "property", "name": "engines"}, {"url": "Protos.html#property_engines", "access": "", "host": "Protos", "type": "property", "name": "engines"}, {"url": "Protos.html#property_environment", "access": "", "host": "Protos", "type": "property", "name": "environment"}, {"url": "Helper.html#method_escape", "access": "", "host": "Helper", "type": "method", "name": "escape"}, {"url": "Engine.html#method_evaluate", "access": "", "host": "Engine", "type": "method", "name": "evaluate"}, {"url": "Controller.html#method_exec", "access": "private", "host": "Controller", "type": "method", "name": "exec"}, {"url": "Storage.html#method_expire", "access": "", "host": "Storage", "type": "method", "name": "expire"}, {"url": "Protos.html#method_extend", "access": "", "host": "Protos", "type": "method", "name": "extend"}, {"url": "Engine.html#property_extensions", "access": "private", "host": "Engine", "type": "property", "name": "extensions"}, {"url": "Utility.html#method_extract", "access": "", "host": "Utility", "type": "method", "name": "extract"}, {"url": "Application.html#property___filters", "access": "private", "host": "Application", "type": "property", "name": "__filters"}, {"url": "Model.html#method_find", "access": "", "host": "Model", "type": "method", "name": "find"}, {"url": "Model.html#method_findAll", "access": "", "host": "Model", "type": "method", "name": "findAll"}, {"url": "Application.html#method_fullPath", "access": "", "host": "Application", "type": "method", "name": "fullPath"}, {"url": "ModelObject.html#property_generator", "access": "", "host": "ModelObject", "type": "property", "name": "generator"}, {"url": "Model.html#method_get", "access": "", "host": "Model", "type": "method", "name": "get"}, {"url": "Storage.html#method_get", "access": "", "host": "Storage", "type": "method", "name": "get"}, {"url": "Controller.html#method_getAlias", "access": "", "host": "Controller", "type": "method", "name": "getAlias"}, {"url": "Model.html#method_getAll", "access": "", "host": "Model", "type": "method", "name": "getAll"}, {"url": "Engine.html#method_getBoundaryWhitespace", "access": "private", "host": "Engine", "type": "method", "name": "getBoundaryWhitespace"}, {"url": "Engine.html#method_getCachedFunction", "access": "", "host": "Engine", "type": "method", "name": "getCachedFunction"}, {"url": "Application.html#method_getClientResource", "access": "", "host": "Application", "type": "method", "name": "getClientResource"}, {"url": "Controller.html#method_getControllerByAlias", "access": "", "host": "Controller", "type": "method", "name": "getControllerByAlias"}, {"url": "Engine.html#method_getEngineByExtension", "access": "", "host": "Engine", "type": "method", "name": "getEngineByExtension"}, {"url": "Utility.html#method_getFiles", "access": "", "host": "Utility", "type": "method", "name": "getFiles"}, {"url": "Storage.html#method_getHash", "access": "", "host": "Storage", "type": "method", "name": "getHash"}, {"url": "Controller.html#method_getQueryData", "access": "", "host": "Controller", "type": "method", "name": "getQueryData"}, {"url": "Application.html#method__getResource", "access": "private", "host": "Application", "type": "method", "name": "_getResource"}, {"url": "http.OutgoingMessage.html#method_getViewPath", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "getViewPath"}, {"url": "Application.html#property_globals", "access": "", "host": "Application", "type": "property", "name": "globals"}, {"url": "http.OutgoingMessage.html#method_headerFilter", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "headerFilter"}, {"url": "Application.html#property_helpers", "access": "private", "host": "Application", "type": "property", "name": "helpers"}, {"url": "Application.html#method_home", "access": "", "host": "Application", "type": "method", "name": "home"}, {"url": "http.OutgoingMessage.html#method_httpMessage", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "httpMessage"}, {"url": "Application.html#property_httpMethods", "access": "private", "host": "Application", "type": "property", "name": "httpMethods"}, {"url": "Application.html#property_httpStatusCodes", "access": "private", "host": "Application", "type": "property", "name": "httpStatusCodes"}, {"url": "Storage.html#method_incr", "access": "", "host": "Storage", "type": "method", "name": "incr"}, {"url": "Storage.html#method_incrBy", "access": "", "host": "Storage", "type": "method", "name": "incrBy"}, {"url": "Protos.html#property_inflect", "access": "", "host": "Protos", "type": "property", "name": "inflect"}, {"url": "Protos.html#method_inherits", "access": "", "host": "Protos", "type": "method", "name": "inherits"}, {"url": "Application.html#method_initialize", "access": "private", "host": "Application", "type": "method", "name": "initialize"}, {"url": "Application.html#property_initialized", "access": "private", "host": "Application", "type": "property", "name": "initialized"}, {"url": "Model.html#method_insert", "access": "", "host": "Model", "type": "method", "name": "insert"}, {"url": "http.OutgoingMessage.html#method_json", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "json"}, {"url": "Protos.html#method_launchApplication", "access": "private", "host": "Protos", "type": "method", "name": "launchApplication"}, {"url": "Protos.html#property_lib", "access": "", "host": "Protos", "type": "property", "name": "lib"}, {"url": "Application.html#method_libExtensions", "access": "", "host": "Application", "type": "method", "name": "libExtensions"}, {"url": "Application.html#method_log", "access": "", "host": "Application", "type": "method", "name": "log"}, {"url": "Application.html#method_logFormat", "access": "", "host": "Application", "type": "method", "name": "logFormat"}, {"url": "Application.html#property_logging", "access": "", "host": "Application", "type": "property", "name": "logging"}, {"url": "Application.html#method_login", "access": "", "host": "Application", "type": "method", "name": "login"}, {"url": "Application.html#property_loginUrl", "access": "", "host": "Application", "type": "property", "name": "loginUrl"}, {"url": "Utility.html#method_ls", "access": "", "host": "Utility", "type": "method", "name": "ls"}, {"url": "Engine.html#method_makePartialAsync", "access": "", "host": "Engine", "type": "method", "name": "makePartialAsync"}, {"url": "Driver.html#property_maxCacheTimeout", "access": "private", "host": "Driver", "type": "property", "name": "maxCacheTimeout"}, {"url": "Application.html#method_md5", "access": "", "host": "Application", "type": "method", "name": "md5"}, {"url": "Application.html#property_model", "access": "", "host": "Application", "type": "property", "name": "model"}, {"url": "Driver.html#property___modelMethods", "access": "private", "host": "Driver", "type": "property", "name": "__modelMethods"}, {"url": "Application.html#property_models", "access": "private", "host": "Application", "type": "property", "name": "models"}, {"url": "Engine.html#property_module", "access": "private", "host": "Engine", "type": "property", "name": "module"}, {"url": "Driver.html#method_multi", "access": "", "host": "Driver", "type": "method", "name": "multi"}, {"url": "Model.html#method_multi", "access": "private", "host": "Model", "type": "method", "name": "multi"}, {"url": "Storage.html#method_multi", "access": "", "host": "Storage", "type": "method", "name": "multi"}, {"url": "Engine.html#property_multiPart", "access": "private", "host": "Engine", "type": "property", "name": "multiPart"}, {"url": "Application.html#property_mvcpath", "access": "private", "host": "Application", "type": "property", "name": "mvcpath"}, {"url": "Model.html#method_new", "access": "", "host": "Model", "type": "method", "name": "new"}, {"url": "http.IncomingMessage.html#method_next", "access": "", "host": "http.IncomingMessage", "type": "method", "name": "next"}, {"url": "Application.html#method_notFound", "access": "", "host": "Application", "type": "method", "name": "notFound"}, {"url": "Application.html#method_oninitialize", "access": "", "host": "Application", "type": "method", "name": "oninitialize"}, {"url": "Utility.html#method_onlySetEnumerable", "access": "", "host": "Utility", "type": "method", "name": "onlySetEnumerable"}, {"url": "Engine.html#property_options", "access": "private", "host": "Engine", "type": "property", "name": "options"}, {"url": "http.IncomingMessage.html#method_pageTitle", "access": "", "host": "http.IncomingMessage", "type": "method", "name": "pageTitle"}, {"url": "Utility.html#method_parseRange", "access": "private", "host": "Utility", "type": "method", "name": "parseRange"}, {"url": "Application.html#property_path", "access": "private", "host": "Application", "type": "property", "name": "path"}, {"url": "Protos.html#property_path", "access": "", "host": "Protos", "type": "property", "name": "path"}, {"url": "Application.html#property_paths", "access": "private", "host": "Application", "type": "property", "name": "paths"}, {"url": "Controller.html#method_prepare", "access": "private", "host": "Controller", "type": "method", "name": "prepare"}, {"url": "Model.html#method_prepare", "access": "private", "host": "Model", "type": "method", "name": "prepare"}, {"url": "Controller.html#method_processRoute", "access": "private", "host": "Controller", "type": "method", "name": "processRoute"}, {"url": "Model.html#property_properties", "access": "", "host": "Model", "type": "property", "name": "properties"}, {"url": "Model.html#method_propertyCheck", "access": "private", "host": "Model", "type": "method", "name": "propertyCheck"}, {"url": "Driver.html#method_provideTo", "access": "private", "host": "Driver", "type": "method", "name": "provideTo"}, {"url": "http.OutgoingMessage.html#method_redirect", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "redirect"}, {"url": "Application.html#property_regex", "access": "", "host": "Application", "type": "property", "name": "regex"}, {"url": "Protos.html#property_regex", "access": "", "host": "Protos", "type": "property", "name": "regex"}, {"url": "Application.html#method_registerViewHelper", "access": "private", "host": "Application", "type": "method", "name": "registerViewHelper"}, {"url": "Application.html#method_relPath", "access": "", "host": "Application", "type": "method", "name": "relPath"}, {"url": "ModelObject.html#method_remove", "access": "", "host": "ModelObject", "type": "method", "name": "remove"}, {"url": "Storage.html#method_rename", "access": "", "host": "Storage", "type": "method", "name": "rename"}, {"url": "http.OutgoingMessage.html#method_render", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "render"}, {"url": "Engine.html#method_renderPartial", "access": "", "host": "Engine", "type": "method", "name": "renderPartial"}, {"url": "Application.html#method_require", "access": "", "host": "Application", "type": "method", "name": "require"}, {"url": "Protos.html#method_require", "access": "", "host": "Protos", "type": "method", "name": "require"}, {"url": "Utility.html#method_requireAllTo", "access": "", "host": "Utility", "type": "method", "name": "requireAllTo"}, {"url": "Application.html#property_resources", "access": "private", "host": "Application", "type": "property", "name": "resources"}, {"url": "Engine.html#method_returnPartials", "access": "", "host": "Engine", "type": "method", "name": "returnPartials"}, {"url": "Application.html#method_routeRequest", "access": "private", "host": "Application", "type": "method", "name": "routeRequest"}, {"url": "Application.html#property_routes", "access": "private", "host": "Application", "type": "property", "name": "routes"}, {"url": "Controller.html#method_runAuthFilters", "access": "private", "host": "Controller", "type": "method", "name": "runAuthFilters"}, {"url": "Helper.html#method_safe_str", "access": "", "host": "Helper", "type": "method", "name": "safe_str"}, {"url": "Helper.html#method_sanitize", "access": "", "host": "Helper", "type": "method", "name": "sanitize"}, {"url": "Model.html#method_save", "access": "", "host": "Model", "type": "method", "name": "save"}, {"url": "ModelObject.html#method_save", "access": "", "host": "ModelObject", "type": "method", "name": "save"}, {"url": "Utility.html#method_searchPattern", "access": "", "host": "Utility", "type": "method", "name": "searchPattern"}, {"url": "http.OutgoingMessage.html#method_sendHeaders", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "sendHeaders"}, {"url": "Application.html#property_server", "access": "private", "host": "Application", "type": "property", "name": "server"}, {"url": "Application.html#method_serverError", "access": "", "host": "Application", "type": "method", "name": "serverError"}, {"url": "Protos.html#property_serverOptions", "access": "", "host": "Protos", "type": "property", "name": "serverOptions"}, {"url": "Storage.html#method_set", "access": "", "host": "Storage", "type": "method", "name": "set"}, {"url": "Driver.html#method_setCachePrefix", "access": "private", "host": "Driver", "type": "method", "name": "setCachePrefix"}, {"url": "http.OutgoingMessage.html#method_setContext", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "setContext"}, {"url": "Model.html#method_setDefaults", "access": "private", "host": "Model", "type": "method", "name": "setDefaults"}, {"url": "Storage.html#method_setHash", "access": "", "host": "Storage", "type": "method", "name": "setHash"}, {"url": "http.OutgoingMessage.html#method_setHeaders", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "setHeaders"}, {"url": "Utility.html#method_setNonEnumerable", "access": "", "host": "Utility", "type": "method", "name": "setNonEnumerable"}, {"url": "http.IncomingMessage.html#method_setPageTitle", "access": "", "host": "http.IncomingMessage", "type": "method", "name": "setPageTitle"}, {"url": "Protos.html#method_startServer", "access": "private", "host": "Protos", "type": "method", "name": "startServer"}, {"url": "Application.html#method__staticViewExists", "access": "private", "host": "Application", "type": "method", "name": "_staticViewExists"}, {"url": "http.IncomingMessage.html#method_stopRoute", "access": "", "host": "http.IncomingMessage", "type": "method", "name": "stopRoute"}, {"url": "Application.html#method__storage", "access": "private", "host": "Application", "type": "method", "name": "_storage"}, {"url": "Driver.html#property_storage", "access": "private", "host": "Driver", "type": "property", "name": "storage"}, {"url": "Application.html#property_storages", "access": "private", "host": "Application", "type": "property", "name": "storages"}, {"url": "Protos.html#property_storages", "access": "", "host": "Protos", "type": "property", "name": "storages"}, {"url": "Utility.html#method_strRepeat", "access": "", "host": "Utility", "type": "method", "name": "strRepeat"}, {"url": "Application.html#property_supports", "access": "private", "host": "Application", "type": "property", "name": "supports"}, {"url": "ModelObject.html#method_sync", "access": "", "host": "ModelObject", "type": "method", "name": "sync"}, {"url": "Engine.html#method_syncPartial", "access": "", "host": "Engine", "type": "method", "name": "syncPartial"}, {"url": "Utility.html#method_toCamelCase", "access": "", "host": "Utility", "type": "method", "name": "toCamelCase"}, {"url": "Model.html#method_typecast", "access": "private", "host": "Model", "type": "method", "name": "typecast"}, {"url": "Utility.html#method_typecast", "access": "", "host": "Utility", "type": "method", "name": "typecast"}, {"url": "Model.html#method_update", "access": "", "host": "Model", "type": "method", "name": "update"}, {"url": "ModelObject.html#method_update", "access": "", "host": "ModelObject", "type": "method", "name": "update"}, {"url": "Storage.html#method_updateHash", "access": "", "host": "Storage", "type": "method", "name": "updateHash"}, {"url": "Application.html#method_url", "access": "", "host": "Application", "type": "method", "name": "url"}, {"url": "Application.html#method_use", "access": "", "host": "Application", "type": "method", "name": "use"}, {"url": "Protos.html#property_util", "access": "", "host": "Protos", "type": "property", "name": "util"}, {"url": "Application.html#method_validate", "access": "private", "host": "Application", "type": "method", "name": "validate"}, {"url": "Model.html#method_validateProperties", "access": "private", "host": "Model", "type": "method", "name": "validateProperties"}, {"url": "Model.html#property_validation", "access": "", "host": "Model", "type": "property", "name": "validation"}, {"url": "Protos.html#property_version", "access": "", "host": "Protos", "type": "property", "name": "version"}, {"url": "Application.html#property_viewCaching", "access": "", "host": "Application", "type": "property", "name": "viewCaching"}, {"url": "Application.html#property_views", "access": "private", "host": "Application", "type": "property", "name": "views"}];
+</script>
+</body>
+</html>

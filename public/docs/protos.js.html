@@ -1,0 +1,802 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html xmlns:yui="http://yuilibrary.com/rdf/1.0/yui.rdf#">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>API: lib   protos.js  (Protos Web Framework)</title>
+
+  <link rel="stylesheet" type="text/css" href="assets/reset-fonts-grids-min.css" />
+  <link rel="stylesheet" type="text/css" href="assets/api.css" />
+  <link type="text/css" rel="stylesheet" href="assets/sh/styles/shCoreDefault.css" />
+  <link type="text/css" rel="stylesheet" href="assets/client.css" />
+
+  <script type="text/javascript" src="assets/api-js"></script>
+  <script type="text/javascript" src="assets/ac-js"></script>
+
+  <script type="text/javascript" src="assets/jquery-1.7.1.js"></script>
+  <script type="text/javascript" src="assets/jquery.base64.js"></script>
+  <script type="text/javascript" src="assets/sh/scripts/shCore.js"></script>
+  <script type="text/javascript" src="assets/sh/scripts/shBrushJScript.js"></script>
+  <script type="text/javascript" src="assets/client.js"></script>
+
+</head>
+
+<body id="yahoo-com">
+
+<div id="doc3" class="yui-t2">
+	<div id="hd">
+        <h1><a href="http://derdesign.github.com/protos" title="Protos Web Framework">Protos Web Framework</a></h1>
+        <h3>lib&nbsp; <span class="subtitle">0.0.4</span></h3>
+        <a href="./index.html" title="Protos Web Framework">Protos Web Framework</a> 
+            &gt; <a href="./module_lib.html" title="lib">lib</a>
+                
+                 &gt; protos.js (source view) 
+        <form onsubmit="return false">
+            <div id="propertysearch">
+                Search: <input autocomplete="off" id="searchinput" />
+                <div id="searchresults">
+                    &nbsp;
+                </div>
+            </div>
+        </form>
+	</div>
+
+	<div id="bd">
+		<div id="yui-main">
+			<div class="yui-b">
+            <form action="#" name="yui-classopts-form" method="get" id="yui-classopts-form">
+                <fieldset>
+                    <legend>Filters</legend>
+                <span class="classopts"><input type="checkbox" name="show_private" id="show_private" /> <label for="show_private">Show Private</label></span>
+                <span class="classopts"><input type="checkbox" name="show_protected" id="show_protected" /> <label for="show_protected">Show Protected</label></span>
+                <span class="classopts"><input type="checkbox" name="show_deprecated" id="show_deprecated" /> <label for="show_deprecated">Show Deprecated</label></span>
+                </fieldset>
+            </form>
+
+                    <div id="srcout">
+                        <style>
+                            #doc3 .classopts { display:none; }
+                        </style>
+                        <div class="highlight"><pre><pre class="brush: js">
+/**
+  @module lib
+*/
+ 
+require('./extensions.js');
+
+var _ = require('underscore'),
+    events = require('events'),
+    net = require('net'),
+    inflect = require('./support/inflect.js'),
+    child_process = require('child_process'),
+    cluster = require('cluster'),
+    os = require('os'),
+    http = require('http'),
+    util = require('util'),
+    pathModule = require('path'),
+    EventEmitter = events.EventEmitter;
+
+/**
+  Protos class. Handles everything that needs to be done, to make sure that
+  the Application(s) run as smoothly as possible.
+  
+  @class Protos
+  @constructor
+  @param {boolean} noserver If set to true, will instantiate the framework, to be used standalone
+  @return {object} Protos instance
+ */
+
+function Protos(noserver) {
+  
+  var self = this;
+  
+  // Initialize `protos` global
+  global.protos = this;
+
+  // Inherit from constructor
+  _.extend(this, this.constructor);
+
+  /**
+    Cluster configuration
+    
+    @property clusterConfig
+   */
+  this.clusterConfig = {
+    listenPort: null,
+    multiProcess: 0,
+    masterProcess: 'node [master]',
+    singleProcess: 'node [single process]',
+    workerProcess: 'node worker'
+  };
+
+  /**
+    Extends a source object with a target object. (Alias of `underscore::extend`)
+    
+    @method extend
+    @param {object} destination
+    @param {object} sources*
+   */
+    
+  this.extend = _.extend;
+
+  // Internals
+  
+  /**
+    Contains the driver constructors
+    
+    @property drivers
+   */
+  this.drivers = {};
+  
+  /**
+    Contains the engine constructors
+    
+    @property engines
+   */
+  this.engines = {};
+  
+  /**
+    Contains the storage constructors
+    
+    @property storages
+   */
+  this.storages = {};
+  
+  /**
+    Contains the constructors from lib/
+    
+    @property lib
+   */
+  this.lib = {};
+
+  /**
+    Regular expressions
+    
+    @property regex
+   */
+  this.regex = require('./regex');
+  
+  /**
+    Exposes the `Inflection` class instance
+    
+    @property inflect
+   */
+  this.inflect = inflect;
+
+  // Instance properties
+  this.apps = {};
+  this.vhosts = {};
+  
+  /**
+    Framework`s path. Directory where Protos is installed.
+    
+    @property path
+    @type string
+   */
+  this.path = pathModule.resolve(__dirname, '../');
+  
+  /**
+    Protos className
+    
+    @property className
+    @type string
+    @default Protos
+   */
+  this.className = this.constructor.name;
+  
+  /**
+    Environment string
+    
+    @property environment
+    @type string (getter)
+   */
+  Object.defineProperty(this, 'environment', {
+    value: this.config.environment,
+    writable: false,
+    enumerable: true,
+    configurable: false
+  });
+  
+  /**
+    Server options, provided by environment
+    
+    @property serverOptions
+    @type object
+   */
+  this.serverOptions = null;
+
+  // Preload Utility
+  var Utility = require('./utility'),
+      skipFromLibDir = ['request.js', 'response.js', 'protos.js', 'command.js', 'client'];
+  
+  /**
+    Instance of the `Utility` class
+    
+    @property util
+   */
+  this.util = new Utility();
+  
+  // Lib
+  this.util.getFiles(this.path + '/lib', function(file) {
+    var key = file.replace(self.regex.jsFile, '');
+    if (skipFromLibDir.indexOf(file) >= 0) return;
+    self.lib[key] = require(self.path + '/lib/' + file);
+  });
+
+  // Storage
+  this.util.getFiles(this.path + '/storages/' , function(file) {
+    var key = file.replace(self.regex.jsFile, '');
+    self.storages[key] = require(self.path + '/storages/' + file);
+  });
+  
+  // Database drivers
+  this.util.getFiles(this.path + '/drivers', function(file) {
+    var key = file.replace(self.regex.jsFile, '');
+    self.drivers[key] = require(self.path + '/drivers/' + file);
+  });
+
+  // Template engine prototype
+  this.engineProto = new this.lib.engine();
+  
+  // Template Engines
+  this.util.getFiles(this.path + '/engines', function(file) {
+    var key = file.replace(self.regex.jsFile, '');
+    self.engines[key] = require(self.path + '/engines/' + file);
+  });
+  
+  // Enhance request/response
+  require('./response');
+  require('./request');
+  
+  // Allow using protos standalone
+  if (noserver) return;
+
+  // Launch application server
+  this.launchApplication();
+  
+  // Only set important properties enumerable
+  this.util.onlySetEnumerable(this, ['version', 'className', 'environment', 'path', 'config', 'vhosts', 'apps',
+    'drivers', 'engines', 'storages']);
+  
+  // console.exit(this);
+}
+
+/**
+  Protos Version
+  
+  @property version
+  @type string
+ */
+Protos.version = require('../package.json').version;
+
+// Stores the configuration settings for Protos
+Protos.config = {
+  autoCurl: true
+};
+
+// Protos path
+Protos.path = pathModule.resolve(__dirname, '../');
+
+// Inherit from EventEmitter
+Protos.__proto__ = new EventEmitter();
+
+// Developers Note: the static properties of the Protos constructor are passed
+// to the protos instance on construction. This means, the methods and properties
+// available in the Protos constructor will also be available in the instance.
+
+/**
+  Bootstraps an application
+  
+  @static
+  @method bootstrap
+  @param {string} dir
+  @param {object} config
+  @return {object} Protos instance
+ */
+ 
+Protos.bootstrap = function(dir, config) {
+  
+  if (process.env.FAUX === '1') {
+    console.log(JSON.stringify(config));
+    process.exit();
+  }
+
+  if (typeof config == 'undefined') {
+    throw new Error('Configuration parameter missing');
+  }
+  
+  ['server', 'environments', 'events'].forEach(function(section) {
+    if (!config[section]) config[section] = {};
+  });
+  
+  var appEnv, envFunc, vhosts = {};
+
+  // Get environment
+  appEnv = process.env.NODE_ENV || config.environments.default || 'development';
+
+  // Configure vhosts
+  Protos.configure('bootstrap', config);
+  
+  // Ability to alter the bootstrap
+  Protos.emit('bootstrap_config', config);
+  
+  Protos.configure('environment', appEnv);
+  Protos.configure('hostname', config.server.host || 'localhost');
+  Protos.configure('appPath', dir);
+
+
+  // Stay up setting
+  if (typeof config.server.stayUp == 'undefined') {
+    var stayUp = false;
+  } else {
+    switch (config.server.stayUp.constructor.name || false) {
+      case 'Boolean':
+        stayUp = config.server.stayUp;
+        break;
+      case 'String':
+        stayUp = (appEnv === config.server.stayUp);
+        break;
+      case 'Array':
+        stayUp = (config.server.stayUp.indexOf(appEnv) >= 0)
+        break;
+      default: break;
+    }
+  }
+  
+  // console.log(stayUp);
+
+  // Configure server
+  Protos.configure('server', {
+    listenPort: process.env.PORT_OVERRIDE || config.server.port || 8080,
+    multiProcess: config.server.multiProcess || false,
+    stayUp: stayUp
+  });
+  
+  var events = config.events || {};
+
+  Protos.once('pre_init', function(app) {
+
+    // Setup 'environment' getter
+    Object.defineProperty(app, 'environment', {
+      value: protos.environment,
+      writable: false,
+      enumerable: false,
+      configurable: false
+    });
+    
+    // Run environment script
+    var envFunc, envPath = 'config/env/' + appEnv + '.js';
+    
+    if (pathModule.existsSync(app.fullPath(envPath))) {
+      envFunc = app.require(envPath);
+      if (envFunc instanceof Function) envFunc(app);
+    }
+    
+    // Run environment function from bootstrap
+    var bootEnvFunc = config.environments[appEnv];
+    if (bootEnvFunc instanceof Function) bootEnvFunc(app);
+
+    // Run bootstrap pre_init event (already on pre_init)
+    if (events.pre_init instanceof Function) {
+      events.pre_init.call(null, app);
+      delete events.pre_init;
+    }
+    
+    // Attach bootstrap events
+    for (var evt in events) {
+      app.on(evt, events[evt]);
+    }
+    
+  });
+  
+  // Protos singleton
+  return new Protos();
+
+}
+
+/**
+  Configures the framework.
+  
+  @static
+  @private
+  @method configure
+  @param {string} context 
+  @param {string|object} value
+  @return {self} for chaining
+ */
+
+Protos.configure = function(context, value) {
+  Object.defineProperty(this.config, context, {
+    value: value,
+    writable: false,
+    enumerable: true,
+    configurable: false
+  });
+  return this;
+}
+
+/**
+  Requires a module relative to the protos's path
+  
+  @method require
+  @param {string} module
+  @param {boolean} reload If set to true, will bypass the node modules cache and return a new module instance
+  @return {object} module instance
+ */
+
+Protos.prototype.require = function(module, reload) {
+  var Module, oldCache, outModule,
+      modulePath = '../' + module;
+  
+  if (reload) {
+    // Get node's Module
+    Module = require('module').Module;
+    
+    // Backup original cache
+    oldCache = Module._cache;
+    
+    // Temporarily empty cache         
+    Module._cache = {};
+    
+    // Get the reloaded module
+    try { outModule = require(modulePath); }
+    catch(e) { outModule = require(module); }
+    
+    // Restore the module cache
+    Module._cache = oldCache;  
+    
+    return outModule;
+  } else {
+    try { return require(modulePath); }
+    catch(e) { return require(module); }
+  }
+}
+
+/**
+  Enables the debugger and inspector
+  
+  @method enableDebugger
+ */
+ 
+Protos.prototype.enableDebugger = function() {
+  console.log('');
+  require('child_process').spawn('kill', ['-s', 'SIGUSR1', process.pid]);
+  this.checkInspectorStatus();
+}
+
+/**
+  Notifies the application that an asynchronous event has been triggered
+  
+  @private
+  @method async
+  @param {object} app Application instance
+ */
+
+Protos.prototype.async = function(app) {
+  app.asyncQueue.push(1);
+}
+
+/**
+  Notifies the application that an asynchronous event has finalized
+  
+  @private
+  @param {object} app Application instance
+  @method done
+ */
+
+Protos.prototype.done = function(app) {
+  app.asyncQueue.pop();
+  if (app.asyncQueue.length === 0) {
+    // Application is initialized on the next tick of event loop,
+    // To prevent access errors on objects
+    process.nextTick(function() {
+      app.initialize();
+    });
+  }
+}
+
+/**
+  Deep extend, up to one level
+  
+  @method configExtend
+  @param {object} source
+  @param {object} destination
+  @return {object}
+ */
+ 
+Protos.prototype.configExtend = function(base, source) {
+  // Extend the base, 1 level deep
+  for (var key in base) {
+    if (key in source) {
+      if (source[key] instanceof Array) {
+        base[key] = source[key];
+      } else if (source[key] instanceof Object) {
+        protos.extend(base[key], source[key]);
+      } else {
+        base[key] = source[key];
+      }
+    }
+  }
+  return base;
+}
+
+/**
+  Shortcut for `util.inherits`
+  
+  @method inherits
+  @param {function} base
+  @param {function} parent
+ */
+
+Protos.prototype.inherits = function(base, parent) {
+  return util.inherits(base, this.lib[parent]);
+}
+
+/**
+  Initializes applications, and configures virtual hosts
+  
+  @private
+  @method launchApplication
+ */
+
+Protos.prototype.launchApplication = function() {
+  var enumerable = ['className', 'domain', 'path', 'debugLog', 'viewCaching',
+      'storage', 'lib','models', 'helpers', 'controllers', 'engines', 'initialized'];
+  
+  var host = this.config.hostname,
+      path = pathModule.resolve(this.path, this.config.appPath);
+
+  // Enable inheritance within Application
+  var Application = protos.lib.application;
+  
+  // Initialize app routes
+  this.lib.controller.prototype.queuedRoutes[host] = [];
+
+  // Provide new app prototype
+  var app = new Application(host, path);
+  
+  // Only set important properties enumerable
+  this.util.onlySetEnumerable(app, enumerable);
+
+  // Start the server
+  this.startServer();
+}
+
+/**
+  Starts the application server
+  
+  @private
+  @method startServer
+ */
+
+Protos.prototype.startServer = function() {
+  
+  /*jshint loopfunc:true */
+  
+  var app = this.app,
+      interProcess = this,
+      options = this.config.server,
+      allCPUS = os.cpus().length,
+      bootstrap = protos.config.bootstrap;
+  
+  // Merge config with this.clusterConfig
+  options = this.serverOptions = _.extend(this.clusterConfig, options);
+    
+  if (typeof options.multiProcess == 'number') {
+    allCPUS = (options.multiProcess || 1);
+    options.multiProcess = true;
+    options.allCPUS = allCPUS;
+  } else if (typeof options.multiProcess == 'boolean') {
+    options.allCPUS = allCPUS;
+  } else {
+    throw new Error("The multiProcess option accepts {int|boolean}. Check your boot.js file");
+  }
+  
+  // Convenience function, to avoid repetition
+  function commonStartupOperations() {
+    if (options.stayUp) {
+      process.on('uncaughtException', app.log); // prints stack trace
+    }
+    
+    // console.log(process.pid);
+    
+    startupMessage.call(this, options);
+  }
+  
+  if (options.multiProcess && cluster.isMaster) {
+    
+    // Master
+    
+    process.title = options.masterProcess;
+    
+    for (var worker, i=0; i < allCPUS; i++) {
+      worker = cluster.fork();
+      worker.on('message', function(data) {
+        if (data.cmd != null) interProcess.emit('worker_message', data);
+        if (data.response != null) worker.send({response: data.response});
+      });
+    }
+    
+    cluster.on('death', function(worker) {
+      app.log('Worker process ' + worker.pid + ' died. Restarting...');
+      cluster.fork();
+    });
+    
+    commonStartupOperations.call(this);
+    app.log('Master running...');
+    
+  } else {
+    
+    // app.server already available on `pre_init` event
+    
+    // Worker
+    app.server.listen(options.listenPort, app.domain, function() {
+      // Server init event
+      app.emit('server_init', app.server);
+    });
+    
+    if (options.multiProcess) {
+      process.title = options.workerProcess;
+      app.log('Worker running...');
+    } else {
+      process.title = options.singleProcess;
+      commonStartupOperations.call(this);
+      autoCurlRequest();
+    }
+    
+  }
+}
+
+/**
+  Checks the status of the node inspector
+  
+  @private
+  @method checkInspectorStatus
+ */
+
+Protos.prototype.checkInspectorStatus = function() {
+  var port = 3000;
+  this.util.checkPort(port, function(err) {
+    if (err) {
+      console.log('Node Inspector is not running.\n\nStart it with `protos inspector start`\n');
+      process.exit();
+    } else {
+      console.log('Node Inspector running on http://0.0.0.0:' + port);
+    }
+  });
+}
+  
+  
+/*
+  Prints the startup message
+  
+  @private
+  @param {object} options
+ */
+
+function startupMessage(options) {
+  var app = this.app;
+  if ((process.argv.length >= 3 && !options.multiProcess) || process.env.NODE_ENV == 'silent') {
+    return; // Disable startup message on curl requests
+  }
+  app.log(util.format('%s Server running on %s', inflect.capitalize(protos.environment), app.baseUrl));
+  if (options.multiProcess) app.log(util.format('Running a cluster of %d workers', options.allCPUS));
+  app.emit('startup_message');
+}
+
+/*
+  Handles automatic curl requests on environments, by passing its command line options for a new request.
+  
+  If a relative path is used, the default application`s (the first you have defined on the environment) url
+  will be used, and the path attached to it.
+  
+  An URL can also be used.
+  
+  @private
+ */
+
+function autoCurlRequest() {
+  if (process.argv.length >= 3 && protos.config.autoCurl) {
+    var app = protos.app, 
+        config = protos.config,
+        args = process.argv.slice(2),
+        url = args[args.length - 1],
+        exec = require('child_process').exec,
+        portStr = config.server.listenPort !== 80 ? ":" + config.server.listenPort : '';
+    
+    if (protos.regex.startsWithSlash.test(url)) {
+      url = "http://" + app.domain + portStr + url;
+    }
+    
+    var switches = args.slice(0, (args.length - 1)).join(' ');
+    var cmd = switches + ' ' + url;
+    
+    var cb = function() {
+      app.curl(cmd, function(err, buf) {
+        console.log(err || buf);
+        process.exit(0);
+      });
+    }
+    
+    // Run request when needed
+    if (app.initialized) cb();
+    else app.on('init', cb);
+    
+  }
+}
+  
+module.exports = Protos;
+</pre><!-- .brush: js -->
+</div>
+
+                    </div>
+			</div>
+		</div>
+		<div class="yui-b">
+            <div class="nav">
+
+                    <div id="moduleList" class="module">
+                        <h4>Modules</h4>
+                        <ul class="content">
+                                <li class=""><a href="module_drivers.html" title="drivers">drivers</a></li>
+                                <li class=""><a href="module_engines.html" title="engines">engines</a></li>
+                                <li class="selected"><a href="module_lib.html" title="lib">lib</a></li>
+                                <li class=""><a href="module_storages.html" title="storages">storages</a></li>
+                        </ul>
+                    </div>
+
+                    <div id="classList" class="module">
+                        <h4>Classes</h4>
+                        <ul class="content">
+                                <li class=""><a href="Application.html" title="Application">Application</a></li>
+                                <li class=""><a href="Controller.html" title="Controller">Controller</a></li>
+                                <li class=""><a href="Driver.html" title="Driver">Driver</a></li>
+                                <li class=""><a href="Engine.html" title="Engine">Engine</a></li>
+                                <li class=""><a href="Helper.html" title="Helper">Helper</a></li>
+                                <li class=""><a href="http.IncomingMessage.html" title="http.IncomingMessage">http.IncomingMessage</a></li>
+                                <li class=""><a href="http.OutgoingMessage.html" title="http.OutgoingMessage">http.OutgoingMessage</a></li>
+                                <li class=""><a href="Model.html" title="Model">Model</a></li>
+                                <li class=""><a href="ModelObject.html" title="ModelObject">ModelObject</a></li>
+                                <li class=""><a href="Protos.html" title="Protos">Protos</a></li>
+                                <li class=""><a href="Storage.html" title="Storage">Storage</a></li>
+                                <li class=""><a href="Utility.html" title="Utility">Utility</a></li>
+                        </ul>
+                    </div>
+
+                    <div id="fileList" class="module">
+                        <h4>Files</h4>
+                        <ul class="content">        
+                                <li class=""><a href="application.js.html" title="application.js">application.js</a></li>
+                                <li class=""><a href="command.js.html" title="command.js">command.js</a></li>
+                                <li class=""><a href="controller.js.html" title="controller.js">controller.js</a></li>
+                                <li class=""><a href="driver.js.html" title="driver.js">driver.js</a></li>
+                                <li class=""><a href="engine.js.html" title="engine.js">engine.js</a></li>
+                                <li class=""><a href="extensions.js.html" title="extensions.js">extensions.js</a></li>
+                                <li class=""><a href="helper.js.html" title="helper.js">helper.js</a></li>
+                                <li class=""><a href="model.js.html" title="model.js">model.js</a></li>
+                                <li class="selected"><a href="protos.js.html" title="protos.js">protos.js</a></li>
+                                <li class=""><a href="regex.js.html" title="regex.js">regex.js</a></li>
+                                <li class=""><a href="request.js.html" title="request.js">request.js</a></li>
+                                <li class=""><a href="response.js.html" title="response.js">response.js</a></li>
+                                <li class=""><a href="storage.js.html" title="storage.js">storage.js</a></li>
+                                <li class=""><a href="utility.js.html" title="utility.js">utility.js</a></li>
+                        </ul>
+                    </div>
+
+
+
+
+
+            </div>
+		</div>
+	</div>
+	<div id="ft">
+        <hr />
+        Copyright &copy; 2012 <a href="https://github.com/derdesign">Ernesto M&eacute;ndez</a>. All rights reserved.
+	</div>
+</div>
+<script type="text/javascript">
+
+    var ALL_YUI_PROPS = [{"url": "Model.html#method_add", "access": "", "host": "Model", "type": "method", "name": "add"}, {"url": "Driver.html#method_addCacheData", "access": "private", "host": "Driver", "type": "method", "name": "addCacheData"}, {"url": "Application.html#method_addClientResource", "access": "", "host": "Application", "type": "method", "name": "addClientResource"}, {"url": "Application.html#method_addClientScript", "access": "", "host": "Application", "type": "method", "name": "addClientScript"}, {"url": "Application.html#method_addClientStylesheet", "access": "", "host": "Application", "type": "method", "name": "addClientStylesheet"}, {"url": "Application.html#method_addFilter", "access": "", "host": "Application", "type": "method", "name": "addFilter"}, {"url": "Application.html#method_applyFilters", "access": "", "host": "Application", "type": "method", "name": "applyFilters"}, {"url": "Engine.html#property_async", "access": "private", "host": "Engine", "type": "property", "name": "async"}, {"url": "Protos.html#method_async", "access": "private", "host": "Protos", "type": "method", "name": "async"}, {"url": "Engine.html#method_asyncPartial", "access": "", "host": "Engine", "type": "method", "name": "asyncPartial"}, {"url": "Application.html#property_asyncQueue", "access": "private", "host": "Application", "type": "property", "name": "asyncQueue"}, {"url": "Controller.html#method_authFilter", "access": "", "host": "Controller", "type": "method", "name": "authFilter"}, {"url": "Controller.html#property_authRequired", "access": "", "host": "Controller", "type": "property", "name": "authRequired"}, {"url": "Application.html#property_baseUrl", "access": "", "host": "Application", "type": "property", "name": "baseUrl"}, {"url": "Protos.html#method_bootstrap", "access": "", "host": "Protos", "type": "method", "name": "bootstrap"}, {"url": "Application.html#method__buildPartialView", "access": "private", "host": "Application", "type": "method", "name": "_buildPartialView"}, {"url": "Engine.html#property_cache", "access": "private", "host": "Engine", "type": "property", "name": "cache"}, {"url": "Driver.html#method_cacheClientMethods", "access": "private", "host": "Driver", "type": "method", "name": "cacheClientMethods"}, {"url": "Engine.html#method_cacheFunction", "access": "", "host": "Engine", "type": "method", "name": "cacheFunction"}, {"url": "Driver.html#property_cacheKeys", "access": "private", "host": "Driver", "type": "property", "name": "cacheKeys"}, {"url": "Protos.html#method_checkInspectorStatus", "access": "private", "host": "Protos", "type": "method", "name": "checkInspectorStatus"}, {"url": "Utility.html#method_checkPort", "access": "", "host": "Utility", "type": "method", "name": "checkPort"}, {"url": "Application.html#property_className", "access": "private", "host": "Application", "type": "property", "name": "className"}, {"url": "Protos.html#property_className", "access": "", "host": "Protos", "type": "property", "name": "className"}, {"url": "Application.html#property_client", "access": "private", "host": "Application", "type": "property", "name": "client"}, {"url": "Storage.html#property_client", "access": "private", "host": "Storage", "type": "property", "name": "client"}, {"url": "Application.html#method_clientRequest", "access": "", "host": "Application", "type": "method", "name": "clientRequest"}, {"url": "Protos.html#property_clusterConfig", "access": "", "host": "Protos", "type": "property", "name": "clusterConfig"}, {"url": "Utility.html#method_colorize", "access": "", "host": "Utility", "type": "method", "name": "colorize"}, {"url": "Application.html#property_config", "access": "", "host": "Application", "type": "property", "name": "config"}, {"url": "Storage.html#property_config", "access": "private", "host": "Storage", "type": "property", "name": "config"}, {"url": "Protos.html#method_configExtend", "access": "", "host": "Protos", "type": "method", "name": "configExtend"}, {"url": "Protos.html#method_configure", "access": "private", "host": "Protos", "type": "method", "name": "configure"}, {"url": "Application.html#property_controller", "access": "private", "host": "Application", "type": "property", "name": "controller"}, {"url": "Application.html#property_controllers", "access": "private", "host": "Application", "type": "property", "name": "controllers"}, {"url": "Model.html#method_convertTypes", "access": "private", "host": "Model", "type": "method", "name": "convertTypes"}, {"url": "Model.html#method_create", "access": "", "host": "Model", "type": "method", "name": "create"}, {"url": "Model.html#method_createCurrentState", "access": "private", "host": "Model", "type": "method", "name": "createCurrentState"}, {"url": "Application.html#method_createHash", "access": "", "host": "Application", "type": "method", "name": "createHash"}, {"url": "Model.html#method_createModel", "access": "private", "host": "Model", "type": "method", "name": "createModel"}, {"url": "ModelObject.html#method_createMulti", "access": "private", "host": "ModelObject", "type": "method", "name": "createMulti"}, {"url": "Application.html#method_curl", "access": "", "host": "Application", "type": "method", "name": "curl"}, {"url": "Application.html#method_date", "access": "private", "host": "Application", "type": "method", "name": "date"}, {"url": "Application.html#method_debug", "access": "", "host": "Application", "type": "method", "name": "debug"}, {"url": "Application.html#property_debugColor", "access": "private", "host": "Application", "type": "property", "name": "debugColor"}, {"url": "Application.html#property_debugLog", "access": "", "host": "Application", "type": "property", "name": "debugLog"}, {"url": "Storage.html#method_decr", "access": "", "host": "Storage", "type": "method", "name": "decr"}, {"url": "Storage.html#method_decrBy", "access": "", "host": "Storage", "type": "method", "name": "decrBy"}, {"url": "Model.html#method_delete", "access": "", "host": "Model", "type": "method", "name": "delete"}, {"url": "ModelObject.html#method_delete", "access": "", "host": "ModelObject", "type": "method", "name": "delete"}, {"url": "Storage.html#method_delete", "access": "", "host": "Storage", "type": "method", "name": "delete"}, {"url": "Storage.html#method_deleteFromHash", "access": "", "host": "Storage", "type": "method", "name": "deleteFromHash"}, {"url": "Model.html#method_destroy", "access": "", "host": "Model", "type": "method", "name": "destroy"}, {"url": "ModelObject.html#method_destroy", "access": "", "host": "ModelObject", "type": "method", "name": "destroy"}, {"url": "Application.html#method__detectAjax", "access": "private", "host": "Application", "type": "method", "name": "_detectAjax"}, {"url": "Application.html#property_domain", "access": "private", "host": "Application", "type": "property", "name": "domain"}, {"url": "Protos.html#method_done", "access": "private", "host": "Protos", "type": "method", "name": "done"}, {"url": "Application.html#method__driver", "access": "private", "host": "Application", "type": "method", "name": "_driver"}, {"url": "Application.html#property_drivers", "access": "private", "host": "Application", "type": "property", "name": "drivers"}, {"url": "Protos.html#property_drivers", "access": "", "host": "Protos", "type": "property", "name": "drivers"}, {"url": "Protos.html#method_enableDebugger", "access": "", "host": "Protos", "type": "method", "name": "enableDebugger"}, {"url": "Application.html#property_engines", "access": "private", "host": "Application", "type": "property", "name": "engines"}, {"url": "Protos.html#property_engines", "access": "", "host": "Protos", "type": "property", "name": "engines"}, {"url": "Protos.html#property_environment", "access": "", "host": "Protos", "type": "property", "name": "environment"}, {"url": "Helper.html#method_escape", "access": "", "host": "Helper", "type": "method", "name": "escape"}, {"url": "Engine.html#method_evaluate", "access": "", "host": "Engine", "type": "method", "name": "evaluate"}, {"url": "Controller.html#method_exec", "access": "private", "host": "Controller", "type": "method", "name": "exec"}, {"url": "Storage.html#method_expire", "access": "", "host": "Storage", "type": "method", "name": "expire"}, {"url": "Protos.html#method_extend", "access": "", "host": "Protos", "type": "method", "name": "extend"}, {"url": "Engine.html#property_extensions", "access": "private", "host": "Engine", "type": "property", "name": "extensions"}, {"url": "Utility.html#method_extract", "access": "", "host": "Utility", "type": "method", "name": "extract"}, {"url": "Application.html#property___filters", "access": "private", "host": "Application", "type": "property", "name": "__filters"}, {"url": "Model.html#method_find", "access": "", "host": "Model", "type": "method", "name": "find"}, {"url": "Model.html#method_findAll", "access": "", "host": "Model", "type": "method", "name": "findAll"}, {"url": "Application.html#method_fullPath", "access": "", "host": "Application", "type": "method", "name": "fullPath"}, {"url": "ModelObject.html#property_generator", "access": "", "host": "ModelObject", "type": "property", "name": "generator"}, {"url": "Model.html#method_get", "access": "", "host": "Model", "type": "method", "name": "get"}, {"url": "Storage.html#method_get", "access": "", "host": "Storage", "type": "method", "name": "get"}, {"url": "Controller.html#method_getAlias", "access": "", "host": "Controller", "type": "method", "name": "getAlias"}, {"url": "Model.html#method_getAll", "access": "", "host": "Model", "type": "method", "name": "getAll"}, {"url": "Engine.html#method_getBoundaryWhitespace", "access": "private", "host": "Engine", "type": "method", "name": "getBoundaryWhitespace"}, {"url": "Engine.html#method_getCachedFunction", "access": "", "host": "Engine", "type": "method", "name": "getCachedFunction"}, {"url": "Application.html#method_getClientResource", "access": "", "host": "Application", "type": "method", "name": "getClientResource"}, {"url": "Controller.html#method_getControllerByAlias", "access": "", "host": "Controller", "type": "method", "name": "getControllerByAlias"}, {"url": "Engine.html#method_getEngineByExtension", "access": "", "host": "Engine", "type": "method", "name": "getEngineByExtension"}, {"url": "Utility.html#method_getFiles", "access": "", "host": "Utility", "type": "method", "name": "getFiles"}, {"url": "Storage.html#method_getHash", "access": "", "host": "Storage", "type": "method", "name": "getHash"}, {"url": "Controller.html#method_getQueryData", "access": "", "host": "Controller", "type": "method", "name": "getQueryData"}, {"url": "Application.html#method__getResource", "access": "private", "host": "Application", "type": "method", "name": "_getResource"}, {"url": "http.OutgoingMessage.html#method_getViewPath", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "getViewPath"}, {"url": "Application.html#property_globals", "access": "", "host": "Application", "type": "property", "name": "globals"}, {"url": "http.OutgoingMessage.html#method_headerFilter", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "headerFilter"}, {"url": "Application.html#property_helpers", "access": "private", "host": "Application", "type": "property", "name": "helpers"}, {"url": "Application.html#method_home", "access": "", "host": "Application", "type": "method", "name": "home"}, {"url": "http.OutgoingMessage.html#method_httpMessage", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "httpMessage"}, {"url": "Application.html#property_httpMethods", "access": "private", "host": "Application", "type": "property", "name": "httpMethods"}, {"url": "Application.html#property_httpStatusCodes", "access": "private", "host": "Application", "type": "property", "name": "httpStatusCodes"}, {"url": "Storage.html#method_incr", "access": "", "host": "Storage", "type": "method", "name": "incr"}, {"url": "Storage.html#method_incrBy", "access": "", "host": "Storage", "type": "method", "name": "incrBy"}, {"url": "Protos.html#property_inflect", "access": "", "host": "Protos", "type": "property", "name": "inflect"}, {"url": "Protos.html#method_inherits", "access": "", "host": "Protos", "type": "method", "name": "inherits"}, {"url": "Application.html#method_initialize", "access": "private", "host": "Application", "type": "method", "name": "initialize"}, {"url": "Application.html#property_initialized", "access": "private", "host": "Application", "type": "property", "name": "initialized"}, {"url": "Model.html#method_insert", "access": "", "host": "Model", "type": "method", "name": "insert"}, {"url": "http.OutgoingMessage.html#method_json", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "json"}, {"url": "Protos.html#method_launchApplication", "access": "private", "host": "Protos", "type": "method", "name": "launchApplication"}, {"url": "Protos.html#property_lib", "access": "", "host": "Protos", "type": "property", "name": "lib"}, {"url": "Application.html#method_libExtensions", "access": "", "host": "Application", "type": "method", "name": "libExtensions"}, {"url": "Application.html#method_log", "access": "", "host": "Application", "type": "method", "name": "log"}, {"url": "Application.html#method_logFormat", "access": "", "host": "Application", "type": "method", "name": "logFormat"}, {"url": "Application.html#property_logging", "access": "", "host": "Application", "type": "property", "name": "logging"}, {"url": "Application.html#method_login", "access": "", "host": "Application", "type": "method", "name": "login"}, {"url": "Application.html#property_loginUrl", "access": "", "host": "Application", "type": "property", "name": "loginUrl"}, {"url": "Utility.html#method_ls", "access": "", "host": "Utility", "type": "method", "name": "ls"}, {"url": "Engine.html#method_makePartialAsync", "access": "", "host": "Engine", "type": "method", "name": "makePartialAsync"}, {"url": "Driver.html#property_maxCacheTimeout", "access": "private", "host": "Driver", "type": "property", "name": "maxCacheTimeout"}, {"url": "Application.html#method_md5", "access": "", "host": "Application", "type": "method", "name": "md5"}, {"url": "Application.html#property_model", "access": "", "host": "Application", "type": "property", "name": "model"}, {"url": "Driver.html#property___modelMethods", "access": "private", "host": "Driver", "type": "property", "name": "__modelMethods"}, {"url": "Application.html#property_models", "access": "private", "host": "Application", "type": "property", "name": "models"}, {"url": "Engine.html#property_module", "access": "private", "host": "Engine", "type": "property", "name": "module"}, {"url": "Driver.html#method_multi", "access": "", "host": "Driver", "type": "method", "name": "multi"}, {"url": "Model.html#method_multi", "access": "private", "host": "Model", "type": "method", "name": "multi"}, {"url": "Storage.html#method_multi", "access": "", "host": "Storage", "type": "method", "name": "multi"}, {"url": "Engine.html#property_multiPart", "access": "private", "host": "Engine", "type": "property", "name": "multiPart"}, {"url": "Application.html#property_mvcpath", "access": "private", "host": "Application", "type": "property", "name": "mvcpath"}, {"url": "Model.html#method_new", "access": "", "host": "Model", "type": "method", "name": "new"}, {"url": "http.IncomingMessage.html#method_next", "access": "", "host": "http.IncomingMessage", "type": "method", "name": "next"}, {"url": "Application.html#method_notFound", "access": "", "host": "Application", "type": "method", "name": "notFound"}, {"url": "Application.html#method_oninitialize", "access": "", "host": "Application", "type": "method", "name": "oninitialize"}, {"url": "Utility.html#method_onlySetEnumerable", "access": "", "host": "Utility", "type": "method", "name": "onlySetEnumerable"}, {"url": "Engine.html#property_options", "access": "private", "host": "Engine", "type": "property", "name": "options"}, {"url": "http.IncomingMessage.html#method_pageTitle", "access": "", "host": "http.IncomingMessage", "type": "method", "name": "pageTitle"}, {"url": "Utility.html#method_parseRange", "access": "private", "host": "Utility", "type": "method", "name": "parseRange"}, {"url": "Application.html#property_path", "access": "private", "host": "Application", "type": "property", "name": "path"}, {"url": "Protos.html#property_path", "access": "", "host": "Protos", "type": "property", "name": "path"}, {"url": "Application.html#property_paths", "access": "private", "host": "Application", "type": "property", "name": "paths"}, {"url": "Controller.html#method_prepare", "access": "private", "host": "Controller", "type": "method", "name": "prepare"}, {"url": "Model.html#method_prepare", "access": "private", "host": "Model", "type": "method", "name": "prepare"}, {"url": "Controller.html#method_processRoute", "access": "private", "host": "Controller", "type": "method", "name": "processRoute"}, {"url": "Model.html#property_properties", "access": "", "host": "Model", "type": "property", "name": "properties"}, {"url": "Model.html#method_propertyCheck", "access": "private", "host": "Model", "type": "method", "name": "propertyCheck"}, {"url": "Driver.html#method_provideTo", "access": "private", "host": "Driver", "type": "method", "name": "provideTo"}, {"url": "http.OutgoingMessage.html#method_redirect", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "redirect"}, {"url": "Application.html#property_regex", "access": "", "host": "Application", "type": "property", "name": "regex"}, {"url": "Protos.html#property_regex", "access": "", "host": "Protos", "type": "property", "name": "regex"}, {"url": "Application.html#method_registerViewHelper", "access": "private", "host": "Application", "type": "method", "name": "registerViewHelper"}, {"url": "Application.html#method_relPath", "access": "", "host": "Application", "type": "method", "name": "relPath"}, {"url": "ModelObject.html#method_remove", "access": "", "host": "ModelObject", "type": "method", "name": "remove"}, {"url": "Storage.html#method_rename", "access": "", "host": "Storage", "type": "method", "name": "rename"}, {"url": "http.OutgoingMessage.html#method_render", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "render"}, {"url": "Engine.html#method_renderPartial", "access": "", "host": "Engine", "type": "method", "name": "renderPartial"}, {"url": "Application.html#method_require", "access": "", "host": "Application", "type": "method", "name": "require"}, {"url": "Protos.html#method_require", "access": "", "host": "Protos", "type": "method", "name": "require"}, {"url": "Utility.html#method_requireAllTo", "access": "", "host": "Utility", "type": "method", "name": "requireAllTo"}, {"url": "Application.html#property_resources", "access": "private", "host": "Application", "type": "property", "name": "resources"}, {"url": "Engine.html#method_returnPartials", "access": "", "host": "Engine", "type": "method", "name": "returnPartials"}, {"url": "Application.html#method_routeRequest", "access": "private", "host": "Application", "type": "method", "name": "routeRequest"}, {"url": "Application.html#property_routes", "access": "private", "host": "Application", "type": "property", "name": "routes"}, {"url": "Controller.html#method_runAuthFilters", "access": "private", "host": "Controller", "type": "method", "name": "runAuthFilters"}, {"url": "Helper.html#method_safe_str", "access": "", "host": "Helper", "type": "method", "name": "safe_str"}, {"url": "Helper.html#method_sanitize", "access": "", "host": "Helper", "type": "method", "name": "sanitize"}, {"url": "Model.html#method_save", "access": "", "host": "Model", "type": "method", "name": "save"}, {"url": "ModelObject.html#method_save", "access": "", "host": "ModelObject", "type": "method", "name": "save"}, {"url": "Utility.html#method_searchPattern", "access": "", "host": "Utility", "type": "method", "name": "searchPattern"}, {"url": "http.OutgoingMessage.html#method_sendHeaders", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "sendHeaders"}, {"url": "Application.html#property_server", "access": "private", "host": "Application", "type": "property", "name": "server"}, {"url": "Application.html#method_serverError", "access": "", "host": "Application", "type": "method", "name": "serverError"}, {"url": "Protos.html#property_serverOptions", "access": "", "host": "Protos", "type": "property", "name": "serverOptions"}, {"url": "Storage.html#method_set", "access": "", "host": "Storage", "type": "method", "name": "set"}, {"url": "Driver.html#method_setCachePrefix", "access": "private", "host": "Driver", "type": "method", "name": "setCachePrefix"}, {"url": "http.OutgoingMessage.html#method_setContext", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "setContext"}, {"url": "Model.html#method_setDefaults", "access": "private", "host": "Model", "type": "method", "name": "setDefaults"}, {"url": "Storage.html#method_setHash", "access": "", "host": "Storage", "type": "method", "name": "setHash"}, {"url": "http.OutgoingMessage.html#method_setHeaders", "access": "", "host": "http.OutgoingMessage", "type": "method", "name": "setHeaders"}, {"url": "Utility.html#method_setNonEnumerable", "access": "", "host": "Utility", "type": "method", "name": "setNonEnumerable"}, {"url": "http.IncomingMessage.html#method_setPageTitle", "access": "", "host": "http.IncomingMessage", "type": "method", "name": "setPageTitle"}, {"url": "Protos.html#method_startServer", "access": "private", "host": "Protos", "type": "method", "name": "startServer"}, {"url": "Application.html#method__staticViewExists", "access": "private", "host": "Application", "type": "method", "name": "_staticViewExists"}, {"url": "http.IncomingMessage.html#method_stopRoute", "access": "", "host": "http.IncomingMessage", "type": "method", "name": "stopRoute"}, {"url": "Application.html#method__storage", "access": "private", "host": "Application", "type": "method", "name": "_storage"}, {"url": "Driver.html#property_storage", "access": "private", "host": "Driver", "type": "property", "name": "storage"}, {"url": "Application.html#property_storages", "access": "private", "host": "Application", "type": "property", "name": "storages"}, {"url": "Protos.html#property_storages", "access": "", "host": "Protos", "type": "property", "name": "storages"}, {"url": "Utility.html#method_strRepeat", "access": "", "host": "Utility", "type": "method", "name": "strRepeat"}, {"url": "Application.html#property_supports", "access": "private", "host": "Application", "type": "property", "name": "supports"}, {"url": "ModelObject.html#method_sync", "access": "", "host": "ModelObject", "type": "method", "name": "sync"}, {"url": "Engine.html#method_syncPartial", "access": "", "host": "Engine", "type": "method", "name": "syncPartial"}, {"url": "Utility.html#method_toCamelCase", "access": "", "host": "Utility", "type": "method", "name": "toCamelCase"}, {"url": "Model.html#method_typecast", "access": "private", "host": "Model", "type": "method", "name": "typecast"}, {"url": "Utility.html#method_typecast", "access": "", "host": "Utility", "type": "method", "name": "typecast"}, {"url": "Model.html#method_update", "access": "", "host": "Model", "type": "method", "name": "update"}, {"url": "ModelObject.html#method_update", "access": "", "host": "ModelObject", "type": "method", "name": "update"}, {"url": "Storage.html#method_updateHash", "access": "", "host": "Storage", "type": "method", "name": "updateHash"}, {"url": "Application.html#method_url", "access": "", "host": "Application", "type": "method", "name": "url"}, {"url": "Application.html#method_use", "access": "", "host": "Application", "type": "method", "name": "use"}, {"url": "Protos.html#property_util", "access": "", "host": "Protos", "type": "property", "name": "util"}, {"url": "Application.html#method_validate", "access": "private", "host": "Application", "type": "method", "name": "validate"}, {"url": "Model.html#method_validateProperties", "access": "private", "host": "Model", "type": "method", "name": "validateProperties"}, {"url": "Model.html#property_validation", "access": "", "host": "Model", "type": "property", "name": "validation"}, {"url": "Protos.html#property_version", "access": "", "host": "Protos", "type": "property", "name": "version"}, {"url": "Application.html#property_viewCaching", "access": "", "host": "Application", "type": "property", "name": "viewCaching"}, {"url": "Application.html#property_views", "access": "private", "host": "Application", "type": "property", "name": "views"}];
+</script>
+</body>
+</html>

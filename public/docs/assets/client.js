@@ -1,0 +1,1 @@
+/Users/der/Node/projects/protos/resources/yuidoc-template/assets/client.js
