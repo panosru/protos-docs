@@ -19,7 +19,7 @@ app.onInitialize(function() {
   var cmd = '\
  rm -Rf build/;\
  mkdir build build/css build/js;\
- cp -Rf public/images build;\
+ cp -Rf public/images public/docs build;\
  cp public/robots.txt build/;\
  cp public/css/client.min.css build/css/;\
  cp public/js/client.min.js public/js/jquery-1.7.1.min.js build/js/;\
